@@ -1142,13 +1142,14 @@
         },
 
         async syncIt() {
-          console.log(now() + " syncIt");
+          // console.log(now() + " syncIt");
           this.sync.info = "Syncing";
           this.sync.total = null;
           this.sync.completed = 0;
           for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
             if (accountData.enabled) {
               console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
+              this.sync.info = "Syncing " + account + " " + accountData.name;
               this.sync.completed++;
             }
           }

@@ -79,7 +79,7 @@
         <img src="images/fknchad_FkqVTzBaUAAiE8x_nobg.png" alt="Logo" height="40" width="40" class="ma-0 ml-2 pa-0"></img>
         <v-app-bar-title class="ma-0 pa-0">Only for ENS v2</v-app-bar-title>
         <v-spacer></v-spacer>
-        <v-btn v-if="!sync.info" @click="checkForUpdates" text size="large" color="primary" variant="text" class="text-none">
+        <v-btn v-if="!sync.info" @click="syncIt" text size="large" color="primary" variant="text" class="text-none">
           <v-icon>mdi-refresh</v-icon>
           Sync
         </v-btn>
@@ -1139,6 +1139,20 @@
           // // miniSearch.search('moto', { prefix: true })        // Prefix search (so that 'moto' will match 'motorcycle')
           // // miniSearch.search('ismael', { fuzzy: 0.2 })        // Fuzzy search, in this example, with a max edit distance of 0.2 * term length.
 
+        },
+
+        async syncIt() {
+          console.log(now() + " syncIt");
+          this.sync.info = "Syncing";
+          this.sync.total = null;
+          this.sync.completed = 0;
+          for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
+            if (accountData.enabled) {
+              console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
+              this.sync.completed++;
+            }
+          }
+          this.sync.info = null;
         },
 
         async checkForUpdates() {

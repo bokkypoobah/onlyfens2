@@ -204,6 +204,7 @@
                 :items-per-page="-1"
                 hide-default-footer
                 class="elevation-1"
+                @click:row="editAccount"
               >
                 <template #item.number="{ index }">
                   <td class="text-center">{{ (accountsCurrentPage - 1) * settings.accounts.pageSize + index + 1 }}</td>
@@ -403,20 +404,22 @@
       <v-dialog v-model="accountDialog.show" max-width="600">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
-            <v-toolbar-title>Account</v-toolbar-title>
+            <v-toolbar-title>{{ accountDialog.new ? "Add Account" : "Edit Account" }}</v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn icon text @click="accountDialog.show = false">
               <v-icon color="primary">mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
           <v-card-text>
-            <v-text-field v-model="accountDialog.address" density="compact" label="address, e.g., '0x1234abcd...''" clearable></v-text-field>
-            <v-text-field v-model="accountDialog.name" density="compact" label="name, e.g., 'account 01'" clearable></v-text-field>
+            <v-text-field :disabled="!accountDialog.new" v-model="accountDialog.account" density="compact" label="account" placeholder="0x1234abcd..." clearable></v-text-field>
+            <v-text-field v-model="accountDialog.name" density="compact" label="name" placeholder="account 01" clearable></v-text-field>
             <v-checkbox-btn v-model="accountDialog.enabled" label="enabled" hide-details v-tooltip="'docs/README.md'"></v-checkbox-btn>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn :disabled="!accountDialog.address || !accountDialog.name" @click="addAccount">Add</v-btn>
+            <v-btn v-if="accountDialog.new" :disabled="!accountDialog.account || !accountDialog.name" @click="addOrUpdateAccount">Add</v-btn>
+            <v-btn v-if="!accountDialog.new" :disabled="!accountDialog.account || !accountDialog.name" @click="deleteAccount">Delete</v-btn>
+            <v-btn v-if="!accountDialog.new" :disabled="!accountDialog.account || !accountDialog.name" @click="addOrUpdateAccount">Update</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -647,7 +650,8 @@
           filterTimerId: null,
           accountDialog: {
             show: false,
-            address: null,
+            new: false,
+            account: null,
             name: null,
             enabled: true,
           },
@@ -906,19 +910,35 @@
 
         newAccount() {
           console.log(now() + " newAccount");
-          this.accountDialog.show = true;
-          this.accountDialog.address = null;
+          this.accountDialog.new = true;
+          this.accountDialog.account = null;
           this.accountDialog.name = null;
           this.accountDialog.enabled = true;
+          this.accountDialog.show = true;
         },
-        addAccount() {
-          // console.log(now() + " addAccount");
-          this.settings.accounts.data[this.accountDialog.address] = {
+        editAccount(event, { item }) {
+          console.log(now() + " editAccount - event: " + JSON.stringify(event) + ", item: " + JSON.stringify(item));
+          this.accountDialog.new = false;
+          this.accountDialog.account = item.account;
+          this.accountDialog.name = item.name;
+          this.accountDialog.enabled = item.enabled;
+          this.accountDialog.show = true;
+        },
+        addOrUpdateAccount() {
+          // console.log(now() + " addOrUpdateAccount");
+          this.settings.accounts.data[this.accountDialog.account] = {
             name: this.accountDialog.name,
             enabled: this.accountDialog.enabled,
           }
-          console.log(now() + " addAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
+          console.log(now() + " addOrUpdateAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
           this.accountDialog.show = false;
+          this.saveSettings();
+        },
+        deleteAccount() {
+          console.log(now() + " deleteAccount - accountDialog.account: " + this.accountDialog.account);
+          delete this.settings.accounts.data[this.accountDialog.account];
+          this.accountDialog.show = false;
+          this.saveSettings();
         },
 
         async getLatestCommit() {

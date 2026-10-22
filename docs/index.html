@@ -404,7 +404,7 @@
       </v-dialog>
 
       <!-- Account Dialog -->
-      <v-dialog v-model="accountDialog.show" max-width="600">
+      <v-dialog v-model="accountDialog.show" persistent max-width="600">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
             <v-toolbar-title>{{ accountDialog.new ? "Add Account" : "Edit Account" }}</v-toolbar-title>
@@ -420,9 +420,9 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn v-if="accountDialog.new" :disabled="!accountDialog.account || !accountDialog.name" @click="addOrUpdateAccount">Add</v-btn>
-            <v-btn v-if="!accountDialog.new" @click="addOrUpdateAccount">Update</v-btn>
-            <v-btn v-if="!accountDialog.new" @click="deleteAccount">Delete</v-btn>
+            <v-btn v-if="accountDialog.new" color="primary" :disabled="!accountDialog.account || !accountDialog.name" @click="addOrUpdateAccount">Add</v-btn>
+            <v-btn v-if="!accountDialog.new" color="error" @click="deleteAccount">Delete</v-btn>
+            <v-btn v-if="!accountDialog.new" color="primary" @click="addOrUpdateAccount">Update</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

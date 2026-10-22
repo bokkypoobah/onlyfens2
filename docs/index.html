@@ -118,6 +118,9 @@
               <v-icon :icon="settings.searchDialog ? 'mdi-feature-search' : 'mdi-feature-search-outline'" size="x-large"></v-icon>
             </v-btn>
             <v-spacer></v-spacer>
+            <v-btn v-if="settings.tab == 'config'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
+              <v-icon icon="mdi-plus" size="x-large"></v-icon>
+            </v-btn>
             <v-chip v-if="settings.tab == 'documents'" color="primary" variant="text" v-tooltip="'#search/#total documents'">
               {{ filteredSortedDocuments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ documents.length }}</span>
             </v-chip>
@@ -129,7 +132,7 @@
               v-if="settings.tab == 'config'"
               v-model="accountsCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedDocuments.length / settings.accounts.pageSize)"
+              :length="Math.ceil(filteredSortedAccounts.length / settings.accounts.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               :show-first-last-page="$vuetify.display.mdAndUp"
@@ -193,10 +196,13 @@
           </div> -->
 
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
-            <!-- DOCUMENTS TAB -->
+            <!-- CONFIG TAB -->
             <v-tabs-window-item value="config" class="ma-1 pa-0">
+              <!-- {{ filteredSortedAccounts }}
+              <br />
+              {{ filteredSortedPagedAccounts }} -->
               <v-data-table
-                :items="filteredSortedPagedDocuments"
+                :items="filteredSortedPagedAccounts"
                 :headers="accountHeaders"
                 :items-per-page="-1"
                 hide-default-footer
@@ -296,7 +302,7 @@
               v-if="settings.tab == 'config'"
               v-model="accountsCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedDocuments.length / settings.accounts.pageSize)"
+              :length="Math.ceil(filteredSortedAccounts.length / settings.accounts.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               show-first-last-page
@@ -390,6 +396,28 @@
             <v-checkbox-btn v-model="settings.search.chronicles" @update:model-value="applyFilter();" label="Chronicles" hide-details v-tooltip="'docs/{yyyymmdd}_{topic}.md'"></v-checkbox-btn>
             <v-checkbox-btn v-model="settings.search.other" @update:model-value="applyFilter();" label="Other .md files" hide-details v-tooltip="'docs/{other}.md'"></v-checkbox-btn>
           </v-card-text>
+        </v-card>
+      </v-dialog>
+
+      <!-- Account Dialog -->
+      <v-dialog v-model="accountDialog.show" max-width="600">
+        <v-card>
+          <v-toolbar flat density="compact" class="text-h6">
+            <v-toolbar-title>Account</v-toolbar-title>
+            <v-spacer></v-spacer>
+            <v-btn icon text @click="accountDialog.show = false">
+              <v-icon color="primary">mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+          <v-card-text>
+            <v-text-field v-model="accountDialog.address" density="compact" label="address, e.g., '0x1234abcd...''" clearable></v-text-field>
+            <v-text-field v-model="accountDialog.name" density="compact" label="name, e.g., 'account 01'" clearable></v-text-field>
+            <v-checkbox-btn v-model="accountDialog.enabled" label="enabled" hide-details v-tooltip="'docs/README.md'"></v-checkbox-btn>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn :disabled="!accountDialog.address || !accountDialog.name" @click="addAccount">Add</v-btn>
+          </v-card-actions>
         </v-card>
       </v-dialog>
 
@@ -586,6 +614,16 @@
               other: true,
             },
             accounts: {
+              data: {
+                "0x287F9b46dceA520D829c874b0AF01f4fbfeF9243": {
+                  name: "internetceo.eth",
+                  enabled: true,
+                },
+                "0xA2113f1E9A66c3B0A75BB466bbBfeEeC987ac92e": {
+                  name: "onlyfan.eth",
+                  enabled: true,
+                },
+              },
               pageSize: 10,
               sortOption: "accountasc",
             },
@@ -598,7 +636,7 @@
               sortOption: "scoredsc",
             },
             searchDialog: false,
-            version: 1,
+            version: 0,
           },
           initialised: false,
           accountsCurrentPage: 1,
@@ -607,6 +645,12 @@
           filteredDocuments: null,
           filteredFragments: null,
           filterTimerId: null,
+          accountDialog: {
+            show: false,
+            address: null,
+            name: null,
+            enabled: true,
+          },
           viewerDialog: false,
           viewerTitle: "",
           viewerHtml: "",
@@ -644,7 +688,7 @@
           accountHeaders: [
             { title: "Account", key: "account", sortable: false },
             { title: "Name", key: "name", sortable: false },
-            // { title: "Keywords", key: "keywords", sortable: false }
+            { title: "Enabled", key: "enabled", sortable: false }
           ],
           docHeaders: [
             { title: "Date", key: "date", sortable: false },
@@ -665,6 +709,22 @@
         }
       },
       computed: {
+        filteredSortedAccounts() {
+          let results = [];
+          // for (let i = 1; i < 20; i++) {
+          //   results.push({ account: "account" + i, name: "name" + i, enabled: i % 2 == 0 });
+          // }
+          for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
+            results.push({ account, name: accountData.name, enabled: accountData.enabled });
+          }
+          return results;
+        },
+        filteredSortedPagedAccounts() {
+          const start = (this.accountsCurrentPage - 1) * this.settings.accounts.pageSize;
+          const results = this.filteredSortedAccounts.slice(start, start + this.settings.accounts.pageSize);
+          // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
+          return results;
+        },
         filteredSortedDocuments() {
           let results = [];
           if (this.filteredDocuments && this.settings.searchType == "advanced") {
@@ -841,6 +901,23 @@
           });
           await this.db.open();
           console.log(now() + " initDB - IndexedDB ready");
+        },
+
+        newAccount() {
+          console.log(now() + " newAccount");
+          this.accountDialog.show = true;
+          this.accountDialog.address = null;
+          this.accountDialog.name = null;
+          this.accountDialog.enabled = true;
+        },
+        addAccount() {
+          // console.log(now() + " addAccount");
+          this.settings.accounts.data[this.accountDialog.address] = {
+            name: this.accountDialog.name,
+            enabled: this.accountDialog.enabled,
+          }
+          console.log(now() + " addAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
+          this.accountDialog.show = false;
         },
 
         async getLatestCommit() {

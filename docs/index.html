@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>onlyfens2 - Only For ENS v2</title>
-  <meta name="description" content="Onlyfens2 (c) BokkyPooBah / Consulting Pty Ltd" />
+  <meta name="description" content="Onlyfens v2 (c) BokkyPooBah / Consulting Pty Ltd" />
   <meta name="author" content="BokkyPooBah" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:site" content="@BokkyPooBah" />
   <meta name="twitter:creator" content="@BokkyPooBah" />
   <meta property="og:url" content="https://github.com/bokkypoobah/TheBokkyBible/" />
-  <meta property="og:title" content="Onlyfens2 (c) BokkyPooBah / Consulting Pty Ltd" />
-  <meta property="og:description" content="Onlyfens2 (c) BokkyPooBah / Consulting Pty Ltd" />
+  <meta property="og:title" content="Onlyfens v2 (c) BokkyPooBah / Consulting Pty Ltd" />
+  <meta property="og:description" content="Onlyfens v2 (c) BokkyPooBah / Consulting Pty Ltd" />
   <meta property="og:image" content="https://bokkypoobah.github.io/TheBokkyBible/images/fknchad_FkqVTzBaUAAiE8x_nobg.png" />
 
   <link rel="icon" type="image/png" href="/images/favicon-96x96.png" sizes="96x96" />
@@ -77,7 +77,7 @@
     <v-app>
       <v-app-bar color="primary-outline" density="compact">
         <img src="images/fknchad_FkqVTzBaUAAiE8x_nobg.png" alt="Logo" height="40" width="40" class="ma-0 ml-2 pa-0"></img>
-        <v-app-bar-title class="ma-0 pa-0">The Bokky Bible Search</v-app-bar-title>
+        <v-app-bar-title class="ma-0 pa-0">Only for ENS v2</v-app-bar-title>
         <v-spacer></v-spacer>
         <v-btn v-if="!sync.info" @click="checkForUpdates" text size="large" color="primary" variant="text" class="text-none">
           <v-icon>mdi-refresh</v-icon>
@@ -983,6 +983,7 @@
         },
 
         async refreshData() {
+          return;
           this.documents = await this.db.documents.toArray();
           this.fragments = await this.db.fragments.toArray();
           this.documentIdIndex = this.documents.reduce((acc, record, index) => {

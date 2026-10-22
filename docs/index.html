@@ -198,9 +198,6 @@
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
             <!-- CONFIG TAB -->
             <v-tabs-window-item value="config" class="ma-1 pa-0">
-              <!-- {{ filteredSortedAccounts }}
-              <br />
-              {{ filteredSortedPagedAccounts }} -->
               <v-data-table
                 :items="filteredSortedPagedAccounts"
                 :headers="accountHeaders"
@@ -208,6 +205,9 @@
                 hide-default-footer
                 class="elevation-1"
               >
+                <template #item.number="{ index }">
+                  <td class="text-center">{{ (accountsCurrentPage - 1) * settings.accounts.pageSize + index + 1 }}</td>
+                </template>
               </v-data-table>
             </v-tabs-window-item>
 
@@ -686,6 +686,7 @@
             { value: "scoreasc", title: "▲ Score" },
           ],
           accountHeaders: [
+            { title: "#", key: "number", sortable: false },
             { title: "Account", key: "account", sortable: false },
             { title: "Name", key: "name", sortable: false },
             { title: "Enabled", key: "enabled", sortable: false }

@@ -126,6 +126,18 @@
             </v-chip>
             <v-spacer></v-spacer>
             <v-pagination
+              v-if="settings.tab == 'config'"
+              v-model="accountsCurrentPage"
+              @update:model-value="saveSettings();"
+              :length="Math.ceil(filteredSortedDocuments.length / settings.accounts.pageSize)"
+              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
+              density="comfortable"
+              :show-first-last-page="$vuetify.display.mdAndUp"
+              class="mr-8"
+              color="primary"
+            >
+            </v-pagination>
+            <v-pagination
               v-if="settings.tab == 'documents'"
               v-model="documentsCurrentPage"
               @update:model-value="saveSettings();"
@@ -180,7 +192,19 @@
             </div>
           </div> -->
 
-          <v-tabs-window v-if="Object.keys(documents).length > 0" v-model="settings.tab" class="ma-1 mt-3 pa-0">
+          <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
+            <!-- DOCUMENTS TAB -->
+            <v-tabs-window-item value="config" class="ma-1 pa-0">
+              <v-data-table
+                :items="filteredSortedPagedDocuments"
+                :headers="accountHeaders"
+                :items-per-page="-1"
+                hide-default-footer
+                class="elevation-1"
+              >
+              </v-data-table>
+            </v-tabs-window-item>
+
             <!-- DOCUMENTS TAB -->
             <v-tabs-window-item value="documents" class="ma-1 pa-0">
               <v-data-table
@@ -266,8 +290,20 @@
             </v-tabs-window-item>
           </v-tabs-window>
 
-          <v-toolbar v-if="settings.tab != 'document'" flat color="grey-lighten-4" density="compact" class="ma-0 mt-1">
+          <v-toolbar v-if="settings.tab != 'document' || true" flat color="grey-lighten-4" density="compact" class="ma-0 mt-1">
             <v-spacer></v-spacer>
+            <v-pagination
+              v-if="settings.tab == 'config'"
+              v-model="accountsCurrentPage"
+              @update:model-value="saveSettings();"
+              :length="Math.ceil(filteredSortedDocuments.length / settings.accounts.pageSize)"
+              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
+              density="comfortable"
+              show-first-last-page
+              class="mr-8"
+              color="primary"
+            >
+            </v-pagination>
             <v-pagination
               v-if="settings.tab == 'documents'"
               v-model="documentsCurrentPage"
@@ -292,6 +328,16 @@
               color="primary"
             >
             </v-pagination>
+            <v-select
+              v-if="settings.tab == 'config'"
+              v-model="settings.accounts.pageSize"
+              @update:model-value="saveSettings();"
+              :items="pageSizes"
+              variant="plain"
+              density="compact"
+              class="mt-4 mr-2"
+              style="max-width: 70px;"
+            ></v-select>
             <v-select
               v-if="settings.tab == 'documents'"
               v-model="settings.documents.pageSize"
@@ -522,13 +568,14 @@
       data() {
         return {
           db: null,
+          accounts: ["0x287F9b46dceA520D829c874b0AF01f4fbfeF9243", "0xA2113f1E9A66c3B0A75BB466bbBfeEeC987ac92e"],
           documents: [],
           fragments: [],
           documentIdIndex: {},
           fragmentIdIndex: {},
 
           settings: {
-            tab: "documents",
+            tab: "names",
             searchString: null,
             searchType: "advanced",
             filter: null,
@@ -537,6 +584,10 @@
               readme: true,
               chronicles: true,
               other: true,
+            },
+            accounts: {
+              pageSize: 10,
+              sortOption: "accountasc",
             },
             documents: {
               pageSize: 10,
@@ -547,9 +598,10 @@
               sortOption: "scoredsc",
             },
             searchDialog: false,
-            version: 7,
+            version: 1,
           },
           initialised: false,
+          accountsCurrentPage: 1,
           documentsCurrentPage: 1,
           fragmentsCurrentPage: 1,
           filteredDocuments: null,
@@ -571,6 +623,12 @@
             { value: 100, title: "100" },
             { value: 500, title: "500" },
           ],
+          accountsSortOptions: [
+            { value: "accountasc", title: "▲ Account" },
+            { value: "accountdsc", title: "▼ Account" },
+            { value: "scoredsc", title: "▼ Score" },
+            { value: "scoreasc", title: "▲ Score" },
+          ],
           docsSortOptions: [
             { value: "datedsc", title: "▼ Date" },
             { value: "dateasc", title: "▲ Date" },
@@ -582,6 +640,11 @@
             { value: "dateasc", title: "▲ Date" },
             { value: "scoredsc", title: "▼ Score" },
             { value: "scoreasc", title: "▲ Score" },
+          ],
+          accountHeaders: [
+            { title: "Account", key: "account", sortable: false },
+            { title: "Name", key: "name", sortable: false },
+            // { title: "Keywords", key: "keywords", sortable: false }
           ],
           docHeaders: [
             { title: "Date", key: "date", sortable: false },
@@ -766,7 +829,7 @@
       methods: {
         async initDB() {
           this.db = new Dexie('Onlyfens2')
-          this.db.version(5).stores({
+          this.db.version(1).stores({
             documents: '++id, filename, date, title, *keywords',
             fragments: '++id, docId, date, type, heading, text',
             metadata: 'key'

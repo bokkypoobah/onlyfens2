@@ -140,31 +140,7 @@
               color="primary"
             >
             </v-pagination>
-            <v-pagination
-              v-if="settings.tab == 'documents'"
-              v-model="documentsCurrentPage"
-              @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedDocuments.length / settings.documents.pageSize)"
-              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
-              density="comfortable"
-              :show-first-last-page="$vuetify.display.mdAndUp"
-              class="mr-8"
-              color="primary"
-            >
-            </v-pagination>
-            <v-pagination
-              v-if="settings.tab == 'fragments'"
-              v-model="fragmentsCurrentPage"
-              @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedFragments.length / settings.fragments.pageSize)"
-              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
-              density="comfortable"
-              :show-first-last-page="$vuetify.display.mdAndUp"
-              class="mr-8"
-              color="primary"
-            >
-            </v-pagination>
-            <v-select
+            <!-- <v-select
               v-if="settings.tab == 'documents'"
               v-model="settings.documents.sortOption"
               @update:model-value="saveSettings();"
@@ -174,8 +150,8 @@
               class="mt-4 mr-2"
               style="max-width: 150px;"
             >
-            </v-select>
-            <v-select
+            </v-select> -->
+            <!-- <v-select
               v-if="settings.tab == 'fragments'"
               v-model="settings.fragments.sortOption"
               @update:model-value="saveSettings();"
@@ -185,7 +161,7 @@
               class="mt-4 mr-2"
               style="max-width: 150px;"
             >
-            </v-select>
+            </v-select> -->
           </v-toolbar>
 
           <!-- <div>
@@ -302,6 +278,16 @@
 
           <v-toolbar v-if="settings.tab != 'document' || true" flat color="grey-lighten-4" density="compact" class="ma-0 mt-1">
             <v-spacer></v-spacer>
+            <v-select
+              v-if="settings.tab == 'config'"
+              v-model="settings.accounts.pageSize"
+              @update:model-value="saveSettings();"
+              :items="pageSizes"
+              variant="plain"
+              density="compact"
+              class="mt-4 mr-2"
+              style="max-width: 70px;"
+            ></v-select>
             <v-pagination
               v-if="settings.tab == 'config'"
               v-model="accountsCurrentPage"
@@ -314,60 +300,6 @@
               color="primary"
             >
             </v-pagination>
-            <v-pagination
-              v-if="settings.tab == 'documents'"
-              v-model="documentsCurrentPage"
-              @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedDocuments.length / settings.documents.pageSize)"
-              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
-              density="comfortable"
-              show-first-last-page
-              class="mr-8"
-              color="primary"
-            >
-            </v-pagination>
-            <v-pagination
-              v-if="settings.tab == 'fragments'"
-              v-model="fragmentsCurrentPage"
-              @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedFragments.length / settings.fragments.pageSize)"
-              :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
-              density="comfortable"
-              show-first-last-page
-              class="mr-8"
-              color="primary"
-            >
-            </v-pagination>
-            <v-select
-              v-if="settings.tab == 'config'"
-              v-model="settings.accounts.pageSize"
-              @update:model-value="saveSettings();"
-              :items="pageSizes"
-              variant="plain"
-              density="compact"
-              class="mt-4 mr-2"
-              style="max-width: 70px;"
-            ></v-select>
-            <v-select
-              v-if="settings.tab == 'documents'"
-              v-model="settings.documents.pageSize"
-              @update:model-value="saveSettings();"
-              :items="pageSizes"
-              variant="plain"
-              density="compact"
-              class="mt-4 mr-2"
-              style="max-width: 70px;"
-            ></v-select>
-            <v-select
-              v-if="settings.tab == 'fragments'"
-              v-model="settings.fragments.pageSize"
-              @update:model-value="saveSettings();"
-              :items="pageSizes"
-              variant="plain"
-              density="compact"
-              class="mt-4 mr-2"
-              style="max-width: 70px;"
-            ></v-select>
           </v-toolbar>
         </v-container>
       </v-main>

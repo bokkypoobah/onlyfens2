@@ -57,3 +57,11 @@ wget $SOURCE -O $DEST
 SOURCE=https://cdn.jsdelivr.net/npm/moment@2.24.0/min/moment.min.js
 DEST=../docs/js/moment_2.24.0.min.js
 wget $SOURCE -O $DEST
+
+# Get ethers[.min].js 5.8.0
+SOURCE=https://cdnjs.cloudflare.com/ajax/libs/ethers/5.8.0/ethers.umd.js
+DEST=../docs/js/ethers_5.8.0.umd.js
+wget $SOURCE -O $DEST
+SOURCE=https://cdnjs.cloudflare.com/ajax/libs/ethers/5.8.0/ethers.umd.min.js
+DEST=../docs/js/ethers_5.8.0.umd.min.js
+wget $SOURCE -O $DEST

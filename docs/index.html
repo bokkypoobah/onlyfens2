@@ -34,6 +34,7 @@
   <!-- <script src="js/minisearch_7.2.0.js"></script> -->
   <!-- <script src="js/highlight_11.11.1.js"></script> -->
   <!-- <script src="js/stopwords.js"></script> -->
+  <script src="js/ethers_5.8.0.umd.min.js" type="application/javascript"></script>
 
   <style>
     body { font-family: system-ui, sans-serif; }
@@ -1142,7 +1143,48 @@
 
         },
 
+
+        // 10:01:15 syncIt - processing - result: {
+        //   "id": 947292,
+        //   "name": "tickeris.eth",
+        //   "token_id": "32013347301325421126858387838396360801827778729161237248205053585978029050937",
+        //   "version": 1,
+        //   "token_contract": null,
+        //   "owner": "0xa2113f1e9a66c3b0a75bb466bbbfeeec987ac92e",
+        //   "expiry_date": "2029-11-28T01:27:11.000Z",
+        //   "registration_status": "registered",
+        //   "grace_ends_at": "2030-02-26T01:27:11.000Z",
+        //   "premium_ends_at": "2030-03-19T01:27:11.000Z",
+        //   "registration_date": "2024-11-28T01:27:11.000Z",
+        //   "creation_date": "2024-11-28T01:27:11.000Z",
+        //   "last_sale_date": null,
+        //   "last_sale_price": null,
+        //   "last_sale_currency": null,
+        //   "last_sale_price_usd": null,
+        //   "metadata": {
+        //     "avatar": "https://euc.li/tickeris.eth"
+        //   },
+        //   "metadata_updated_at": "2025-11-17T06:04:50.286Z",
+        //   "clubs": null,
+        //   "club_ranks": null,
+        //   "has_numbers": false,
+        //   "has_emoji": false,
+        //   "listings": [],
+        //   "upvotes": 0,
+        //   "downvotes": 0,
+        //   "net_score": 0,
+        //   "watchers_count": 0,
+        //   "is_user_watching": false,
+        //   "watchlist_record_id": null,
+        //   "highest_offer_wei": null,
+        //   "highest_offer_currency": "0x0000000000000000000000000000000000000000",
+        //   "highest_offer_id": null,
+        //   "view_count": 0,
+        //   "compromised": null
+        // }
+
         async syncIt() {
+          const PAGESIZE = 100;
           // console.log(now() + " syncIt");
           this.sync.info = "Syncing";
           this.sync.total = null;
@@ -1154,17 +1196,33 @@
               let done = false;
               let page = 1;
               do {
-                const url = "https://api.grails.app/api/v1/search?limit=100&page=" + page + "&filters[owner]=" + account + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
+                const url = "https://api.grails.app/api/v1/search?limit=" + PAGESIZE + "&page=" + page + "&filters[owner]=" + account + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
                 console.log(now() + " syncIt - processing - url: " + url);
                 const response = await fetch(url).then(response => response.json());
                 if (response.success) {
                   for (const result of response.data.results) {
-                    // console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
+                    console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
+                    const record = {
+                      id: result.id,
+                      name: result.name,
+                      tokenId: result.token_id,
+                      owner: ethers.utils.getAddress(result.owner),
+                      expiryDate: moment(result.expiry_date).unix(),
+                      // expiryDateString: moment(result.expiry_date),
+                      registrationStatus: result.registration_status,
+                      graceEndsAt: moment(result.grace_ends_at).unix(),
+                      premiumEndsAt: moment(result.premium_ends_at).unix(),
+                      registrationDate: moment(result.registration_date).unix(),
+                      creationDate: moment(result.creation_date).unix(),
+                    };
+                    console.log(now() + " syncIt - processing - record: " + JSON.stringify(record, null, 2));
                   }
                   console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
                   this.sync.completed += response.data.results.length;
                 }
                 done = !response || !response.success || !response.data.pagination.hasNext;
+                // TODO: Testing
+                done = true;
                 if (!done) {
                   page++;
                   await delay(2000);

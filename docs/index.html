@@ -480,6 +480,7 @@
     function formatLocalTime(t) {
       return moment.unix(t).format("YYYY-MM-DD HH:mm:ss");
     }
+    const delay = ms => new Promise(res => setTimeout(res, ms));
     function countHashes(text) {
       let i = 0;
       if (text) {
@@ -1150,7 +1151,25 @@
             if (accountData.enabled) {
               console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
               this.sync.info = "Syncing " + account + " " + accountData.name;
-              this.sync.completed++;
+              let done = false;
+              let page = 1;
+              do {
+                const url = "https://api.grails.app/api/v1/search?limit=100&page=" + page + "&filters[owner]=" + account + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
+                console.log(now() + " syncIt - processing - url: " + url);
+                const response = await fetch(url).then(response => response.json());
+                if (response.success) {
+                  for (const result of response.data.results) {
+                    // console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
+                  }
+                  console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
+                  this.sync.completed += response.data.results.length;
+                }
+                done = !response || !response.success || !response.data.pagination.hasNext;
+                if (!done) {
+                  page++;
+                  await delay(2000);
+                }
+              } while (!done);
             }
           }
           this.sync.info = null;

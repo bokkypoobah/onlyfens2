@@ -114,6 +114,7 @@
           </v-alert>
 
           <v-toolbar flat color="grey-lighten-4" density="compact" class="ma-0 mt-1" style="position: sticky; top: 50px; z-index: 10; width: 100%;">
+            <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 300px" placeholder="name regex"></v-text-field>
             <!-- <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.filter" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable @input="performKeywordSearch" @click:clear="performKeywordSearch" class="ma-1" style="max-width: 300px" placeholder="search terms"></v-text-field> -->
             <!-- <v-btn color="primary" icon density="comfortable" @click="settings.searchDialog = !settings.searchDialog; saveSettings();" v-tooltip="'Cmd+K or Ctrl-K - Search Dialog'">
               <v-icon :icon="settings.searchDialog ? 'mdi-feature-search' : 'mdi-feature-search-outline'" size="x-large"></v-icon>
@@ -122,6 +123,9 @@
             <v-btn v-if="settings.tab == 'config'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
               <v-icon icon="mdi-plus" size="x-large"></v-icon>
             </v-btn>
+            <v-chip v-if="settings.tab == 'names'" color="primary" variant="text" v-tooltip="'#search/#total names'">
+              {{ filteredSortedNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
+            </v-chip>
             <v-chip v-if="settings.tab == 'documents'" color="primary" variant="text" v-tooltip="'#search/#total documents'">
               {{ filteredSortedDocuments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ documents.length }}</span>
             </v-chip>
@@ -628,7 +632,9 @@
             tab: "names",
             searchString: null,
             searchType: "advanced",
-            filter: null,
+            nameFilter: null,
+            accountFilter: null,
+            filter: null, // TODO: Delete
             fuzzyLevel: "0", // MiniSearch fuzzy level
             search: {
               readme: true,
@@ -653,7 +659,7 @@
               sortOption: "scoredsc",
             },
             searchDialog: false,
-            version: 1,
+            version: 2,
           },
           initialised: false,
           namesCurrentPage: 1,
@@ -753,7 +759,33 @@
       },
       computed: {
         filteredSortedNames() {
-          const results = this.names;
+          let regex = null;
+          if (this.settings.nameFilter != null && this.settings.nameFilter.length > 0) {
+            try {
+              regex = new RegExp(this.settings.nameFilter, 'i');
+            } catch (e) {
+              console.log("filteredSortedNames - regex error: " + e.message);
+              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
+            }
+          }
+
+          const results = [];
+
+          for (const item of this.names) {
+            let include = true;
+
+            if (include && regex) {
+              let label = item.name.replace(/\.eth$/, '');
+              // console.log(now() + " filteredSortedPagedNames - item.name: " + item.name + ", label: " + label);
+              if (!(regex.test(label))) {
+                include = false;
+              }
+            }
+
+            if (include) {
+              results.push(item);
+            }
+          }
 
           if (this.settings.names.sortOption == "nameasc") {
             results.sort((a, b) => {
@@ -809,7 +841,7 @@
         filteredSortedPagedNames() {
           const start = (this.namesCurrentPage - 1) * this.settings.names.pageSize;
           const results = this.filteredSortedNames.slice(start, start + this.settings.names.pageSize);
-          console.log(now() + " filteredSortedPagedNames - results: " + JSON.stringify(results.slice(0, 2), null, 2));
+          // console.log(now() + " filteredSortedPagedNames - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
 
@@ -1260,7 +1292,7 @@
 
         async refreshData() {
           this.names = await this.db.names.toArray();
-          console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
+          // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
           return;
 
 

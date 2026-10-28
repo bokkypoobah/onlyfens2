@@ -126,12 +126,12 @@
             <v-chip v-if="settings.tab == 'names'" color="primary" variant="text" v-tooltip="'#search/#total names'">
               {{ filteredSortedNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
             </v-chip>
-            <v-chip v-if="settings.tab == 'documents'" color="primary" variant="text" v-tooltip="'#search/#total documents'">
+            <!-- <v-chip v-if="settings.tab == 'documents'" color="primary" variant="text" v-tooltip="'#search/#total documents'">
               {{ filteredSortedDocuments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ documents.length }}</span>
-            </v-chip>
-            <v-chip v-if="settings.tab == 'fragments'" color="primary" variant="text" v-tooltip="'#search/#total fragments'">
+            </v-chip> -->
+            <!-- <v-chip v-if="settings.tab == 'fragments'" color="primary" variant="text" v-tooltip="'#search/#total fragments'">
               {{ filteredSortedFragments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ fragments.length }}</span>
-            </v-chip>
+            </v-chip> -->
             <v-spacer></v-spacer>
             <v-select
               v-if="settings.tab == 'names'"
@@ -256,6 +256,7 @@
               </v-data-table>
             </v-tabs-window-item>
 
+            <!-- TODO: Delete -->
             <!-- DOCUMENTS TAB -->
             <v-tabs-window-item value="documents" class="ma-1 pa-0">
               <v-data-table
@@ -297,6 +298,7 @@
               </v-data-table>
             </v-tabs-window-item>
 
+            <!-- TODO: Delete -->
             <!-- FRAGMENTS SEARCH TAB -->
             <v-tabs-window-item value="fragments" class="ma-1 pa-0">
               <v-data-iterator :items="filteredSortedPagedFragments">
@@ -336,6 +338,7 @@
               </v-data-iterator>
             </v-tabs-window-item>
 
+            <!-- TODO: Delete -->
             <v-tabs-window-item value="document" class="ma-1 pa-0">
               <div id="modal-body" v-html="viewerHtml" class="markdown-content ma-0 mx-3 pa-0 px-3"></div>
             </v-tabs-window-item>

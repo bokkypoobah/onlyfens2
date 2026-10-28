@@ -768,12 +768,9 @@
               regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
             }
           }
-
           const results = [];
-
           for (const item of this.names) {
             let include = true;
-
             if (include && regex) {
               let label = item.name.replace(/\.eth$/, '');
               // console.log(now() + " filteredSortedPagedNames - item.name: " + item.name + ", label: " + label);
@@ -781,12 +778,10 @@
                 include = false;
               }
             }
-
             if (include) {
               results.push(item);
             }
           }
-
           if (this.settings.names.sortOption == "nameasc") {
             results.sort((a, b) => {
               return ('' + a.name).localeCompare(b.name);
@@ -847,9 +842,6 @@
 
         filteredSortedAccounts() {
           let results = [];
-          // for (let i = 1; i < 20; i++) {
-          //   results.push({ account: "account" + i, name: "name" + i, enabled: i % 2 == 0 });
-          // }
           for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
             results.push({ account, name: accountData.name, enabled: accountData.enabled });
           }
@@ -861,7 +853,8 @@
           // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
-        filteredSortedDocuments() {
+
+        filteredSortedDocuments() { // TODO: Delete
           let results = [];
           if (this.filteredDocuments && this.settings.searchType == "advanced") {
             results = this.filteredDocuments.map(q => ({
@@ -922,14 +915,14 @@
           }
           return results;
         },
-        filteredSortedPagedDocuments() {
+        filteredSortedPagedDocuments() { // TODO: Delete
           const start = (this.documentsCurrentPage - 1) * this.settings.documents.pageSize;
           const results = this.filteredSortedDocuments.slice(start, start + this.settings.documents.pageSize);
           // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
 
-        filteredSortedFragments() {
+        filteredSortedFragments() { // TODO: Delete
           let results = [];
           if (this.filteredFragments && this.settings.searchType == "advanced") {
             results = this.filteredFragments.map(q => {
@@ -1012,13 +1005,13 @@
           }
           return results;
         },
-        filteredSortedPagedFragments() {
+        filteredSortedPagedFragments() { // TODO: Delete
           const start = (this.fragmentsCurrentPage - 1) * this.settings.fragments.pageSize;
           const results = this.filteredSortedFragments.slice(start, start + this.settings.fragments.pageSize);
           // console.log(now() + " filteredSortedPagedFragments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
-        stopWords() {
+        stopWords() { // TODO: Delete
           return new Set(STOPWORDS);
         },
       },
@@ -1086,13 +1079,13 @@
           this.saveSettings();
         },
 
-        async getLatestCommit() {
+        async getLatestCommit() { // TODO: Delete
           const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
           const data = await res.json();
           return { sha: data && data.sha || null, timestamp: data && data.commit && data.commit.author && data.commit.author.date && moment(data.commit.author.date).unix() || null };
         },
 
-        async listMarkdownFiles() {
+        async listMarkdownFiles() { // TODO: Delete
           const url = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
           const res = await fetch(url);
           const data = await res.json();
@@ -1102,7 +1095,7 @@
             .sort((a,b) => (a.sortKey + a.path).localeCompare(b.sortKey + b.path));
         },
 
-        async loadAllFiles() {
+        async loadAllFiles() { // TODO: Delete
           // const files = (await this.listMarkdownFiles()).filter(item => /^202604/.test(item.name));
           const files = await this.listMarkdownFiles();
 
@@ -1121,7 +1114,7 @@
           this.refreshData();
         },
 
-        async processFile(file, text) {
+        async processFile(file, text) { // TODO: Delete
           const isChronicle = /^\d{8}_/.test(file.name);
           // const date = isChronicle ? moment(file.name.split('_')[0], "YYYYMMDD").unix() : null;
           // console.log(now() + " processFile - isChronicle: " + isChronicle + ", file.path: " + file.path + ", date: " + (date && date.toString() || "") + " " + (date && formatLocalTime(date) || file.name));
@@ -1271,7 +1264,7 @@
         //   this.sync.info = null;
         // },
 
-        extractKeywordsWithCounts(text) {
+        extractKeywordsWithCounts(text) { // TODO: Delete
           let results = text.toLowerCase()
             .replace(/[^\w\s]/g, ' ')
             .split(/\s+/)
@@ -1284,7 +1277,7 @@
           return keywordsWithCounts;
         },
 
-        showAllKeywords(item) {
+        showAllKeywords(item) { // TODO: Delete
           const all = item.keywords.map(e => e[0] + ' ' + e[1]).join(' • ');
           alert(`All keywords for this item:\n\n${all}`);
           // Or upgrade to a nice v-dialog if you want fancier
@@ -1293,40 +1286,37 @@
         async refreshData() {
           this.names = await this.db.names.toArray();
           // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
-          return;
 
+          // this.documents = await this.db.documents.toArray();
+          // this.fragments = await this.db.fragments.toArray();
+          // this.documentIdIndex = this.documents.reduce((acc, record, index) => {
+          //   acc[record.id] = index;
+          //   return acc;
+          // }, {});
+          // // console.log(now() + " refreshData - this.documentIdIndex: " + JSON.stringify(this.documentIdIndex, null, 2));
+          // this.fragmentIdIndex = this.fragments.reduce((acc, record, index) => {
+          //   acc[record.id] = index;
+          //   return acc;
+          // }, {});
+          // // console.log(now() + " refreshData - this.fragmentIdIndex: " + JSON.stringify(this.fragmentIdIndex, null, 2));
 
-          this.documents = await this.db.documents.toArray();
-          this.fragments = await this.db.fragments.toArray();
-          this.documentIdIndex = this.documents.reduce((acc, record, index) => {
-            acc[record.id] = index;
-            return acc;
-          }, {});
-          // console.log(now() + " refreshData - this.documentIdIndex: " + JSON.stringify(this.documentIdIndex, null, 2));
-          this.fragmentIdIndex = this.fragments.reduce((acc, record, index) => {
-            acc[record.id] = index;
-            return acc;
-          }, {});
-          // console.log(now() + " refreshData - this.fragmentIdIndex: " + JSON.stringify(this.fragmentIdIndex, null, 2));
+          // // Index all documents
+          // console.log(now() + " refreshData - documents start: " + this.documents.length);
+          // documentsMiniSearch = new MiniSearch({
+          //   fields: ['title', 'content'], // fields to index for full-text search
+          //   storeFields: ['docType', 'filename', 'date', 'title', 'content', 'keywords'] // fields to return with search results
+          // });
+          // documentsMiniSearch.addAll(this.documents);
+          // console.log(now() + " refreshData - documents end: " + this.documents.length);
 
-          // Index all documents
-          console.log(now() + " refreshData - documents start: " + this.documents.length);
-          documentsMiniSearch = new MiniSearch({
-            fields: ['title', 'content'], // fields to index for full-text search
-            storeFields: ['docType', 'filename', 'date', 'title', 'content', 'keywords'] // fields to return with search results
-          });
-          documentsMiniSearch.addAll(this.documents);
-          console.log(now() + " refreshData - documents end: " + this.documents.length);
-
-          fragmentsMiniSearch = new MiniSearch({
-            fields: ['heading', 'text'], // fields to index for full-text search
-            storeFields: ['docId', 'docType', 'date', 'lineNumber', 'headingLevel', 'counters', 'type', 'heading', 'text', 'keywords'] // fields to return with search results
-          });
-
-          // Index all fragments
-          console.log(now() + " refreshData - index start: " + this.fragments.length);
-          fragmentsMiniSearch.addAll(this.fragments);
-          console.log(now() + " refreshData - index end: " + this.fragments.length);
+          // fragmentsMiniSearch = new MiniSearch({
+          //   fields: ['heading', 'text'], // fields to index for full-text search
+          //   storeFields: ['docId', 'docType', 'date', 'lineNumber', 'headingLevel', 'counters', 'type', 'heading', 'text', 'keywords'] // fields to return with search results
+          // });
+          // // Index all fragments
+          // console.log(now() + " refreshData - index start: " + this.fragments.length);
+          // fragmentsMiniSearch.addAll(this.fragments);
+          // console.log(now() + " refreshData - index end: " + this.fragments.length);
 
           await this.applyFilter();
 
@@ -1405,9 +1395,6 @@
         //   "compromised": null
         // }
 
-        // this.db.version(1).stores({
-        //   names: '[owner+tokenId]',
-
         async syncIt() {
           const PAGESIZE = 100;
           const retrievedAt = moment().unix();
@@ -1437,7 +1424,6 @@
                       name: result.name,
                       owner: ethers.utils.getAddress(result.owner),
                       expiryDate: moment(result.expiry_date).unix(),
-                      // expiryDateString: moment(result.expiry_date),
                       registrationStatus: result.registration_status,
                       graceEndsAt: moment(result.grace_ends_at).unix(),
                       premiumEndsAt: moment(result.premium_ends_at).unix(),
@@ -1452,8 +1438,7 @@
                   this.sync.completed += response.data.results.length;
                 }
                 done = !response || !response.success || !response.data.pagination.hasNext;
-                // TODO: Testing
-                // done = true;
+                // done = true; // TODO: Testing
                 if (!done) {
                   page++;
                   await delay(2000);
@@ -1472,7 +1457,7 @@
           this.sync.info = null;
         },
 
-        async checkForUpdates() {
+        async checkForUpdates() { // TODO: Delete
           const meta = await this.db.metadata.get('lastCommit');
           console.log(now() + " checkForUpdates - previous sha: " + (meta && meta.sha || "(none)") + ", timestamp: " + (meta && meta.timestamp && (meta.timestamp + " " + formatLocalTime(meta.timestamp)) || "(none)"));
           this.sync.info = "Getting latest information";
@@ -1491,7 +1476,7 @@
           this.sync.info = null;
         },
 
-        markTitle(item) {
+        markTitle(item) { // TODO: Delete
           const matchingKeywords = Object.keys(item.raw.match).filter(key => item.raw.match[key].includes("heading"));
           const safeText = item.raw.title.replace(/<script/gi, '&lt;script');
           const innerHTML = marked.parse(safeText);
@@ -1509,7 +1494,7 @@
           return innerHTML;
         },
 
-        markText(item) {
+        markText(item) { // TODO: Delete
           marked.setOptions({
             highlight: function(code, lang) {
               if (lang && hljs.getLanguage(lang)) {
@@ -1535,7 +1520,7 @@
           return innerHTML;
         },
 
-        getSlug(title) {
+        getSlug(title) { // TODO: Delete
           console.log(now() + " getSlug - title: " + title);
           const options = {
           	// prefix: "my-prefix-",
@@ -1550,7 +1535,7 @@
           return result;
         },
 
-        async viewDocument(doc) {
+        async viewDocument(doc) { // TODO: Delete
           this.viewerTitle = doc.title;
           // Sanitize before parsing
           const safeContent = doc.content.replace(/<script/gi, '&lt;script');
@@ -1620,13 +1605,13 @@
 
         },
 
-        showFragmentMenuDialog(item) {
+        showFragmentMenuDialog(item) { // TODO: Delete
           this.fragmentMenuDialog.show = true;
           this.fragmentMenuDialog.item = item;
           console.log(now() + " showFragmentMenuDialog - fragmentMenuDialog: '" + JSON.stringify(this.fragmentMenuDialog, null, 2));
         },
 
-        viewQA(qa) {
+        viewQA(qa) { // TODO: Delete
           console.log(now() + " viewQA - qa: " + JSON.stringify(qa, null, 2));
           this.viewerTitle = qa.heading;
           const safeAnswer = qa.text.replace(/<script/gi, '&lt;script');
@@ -1638,14 +1623,14 @@
           //   a.rel = 'noopener noreferrer';
           // });
         },
-        async performKeywordSearch() {
+        async performKeywordSearch() { // TODO: To use with nameFilter
           clearTimeout(this.filterTimerId);
           this.filterTimerId = setTimeout(async () => {
             await this.applyFilter();
           }, 750);
         },
 
-        async applyFilter() {
+        async applyFilter() { // TODO: To use with nameFilter
           // console.log(now() + " applyFilter - settings.filter: '" + this.settings.filter + "', fuzzyLevel: " + this.settings.fuzzyLevel);
           if (this.settings.filter) {
             this.filteredDocuments = documentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, {
@@ -1661,45 +1646,12 @@
             this.filteredFragments = null;
           }
 
-          // let fragments = fragmentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, { fuzzy: 0.2 });
-          // let results = fragmentsMiniSearch.search(MiniSearch.wildcard, {
-          //   filter: (result) => result.type === 'heading'
-          // });
-          // console.log(now() + " applyFilter - fragments: " + JSON.stringify(fragments.slice(0, 10), null, 2));
-          // this.filteredFragments = fragments.map(q => ({
-          //   id: q.id,
-          //   docId: q.docId,
-          //   date: q.date,
-          //   lineNumber: q.lineNumber,
-          //   headingLevel: q.headingLevel,
-          //   counters: q.counters,
-          //   type: q.type,
-          //   title: q.heading,
-          //   text: q.text,
-          //   score: q.score,
-          //   terms: q.terms,
-          //   queryTerms: q.queryTerms,
-          //   match: q.match
-          // }));
-
-          // if (!this.settings.filter) return
-          // const term = this.settings.filter.toLowerCase()
-          // const docMatches = await this.db.documents
-          //   .filter(doc => doc.keywords.some(k => k.includes(term)) || doc.title.toLowerCase().includes(term))
-          //   .toArray()
-          // const qaMatches = await this.db.qas
-          //   .filter(qa => qa.keywords.some(k => k.includes(term)) || qa.question.toLowerCase().includes(term))
-          //   .toArray()
-          // this.filteredFragments = [
-          //   ...docMatches.map(d => ({ type: 'document', date: d.date, title: d.title, id: d.id })),
-          //   ...qaMatches.map(q => ({ type: 'qa', date: q.date, title: q.question, id: q.id }))
-          // ]
-          this.documentsCurrentPage = 1
-          this.fragmentsCurrentPage = 1
+          this.documentsCurrentPage = 1; // TODO: Delete
+          this.fragmentsCurrentPage = 1; // TODO: Delete
           this.saveSettings(); // TODO: May be run on startup
         },
 
-        async viewSearchItem(item) {
+        async viewSearchItem(item) { // TODO: Delete
           if (item.type === 'document') {
             this.db.documents.get(item.id).then(doc => this.viewDocument(doc))
           } else {
@@ -1708,7 +1660,7 @@
           }
         },
 
-        async scrollToHash(hash) {
+        async scrollToHash(hash) { // TODO: Delete
           console.log(now() + " scrollToHash hash: " + hash);
           await Vue.nextTick();
 
@@ -1721,7 +1673,7 @@
           }
         },
 
-        handleDeepLink() {
+        handleDeepLink() { // TODO: Delete
           const hash = window.location.hash;
           if (!hash || hash === '#') return;
 
@@ -1745,7 +1697,7 @@
           }
         },
 
-        openDocumentByFilenameAndAnchor(filename, anchor) {
+        openDocumentByFilenameAndAnchor(filename, anchor) { // TODO: Delete
           // find the synced document
           const doc = this.documents.find(d => d.filename === filename);
           if (!doc) {
@@ -1789,12 +1741,12 @@
             // console.log(now() + " mounted - this.settings: " + JSON.stringify(this.settings, null, 2));
           }
         }
-        Vuetify.useHotkey('cmd+k', async () => {
+        Vuetify.useHotkey('cmd+k', async () => { // TODO: Delete
           // console.log(now() + " mounted - Vuetify.useHotkey cmd+k => search dialog");
           this.settings.searchDialog = !this.settings.searchDialog;
           this.saveSettings();
         });
-        Vuetify.useHotkey('ctrl+k', async () => {
+        Vuetify.useHotkey('ctrl+k', async () => { // TODO: Delete
           // console.log(now() + " mounted - Vuetify.useHotkey ctrl+k => search dialog");
           this.settings.searchDialog = !this.settings.searchDialog;
           this.saveSettings();
@@ -1808,8 +1760,8 @@
         this.initialised = true;
 
         // === DEEP LINK SUPPORT (minimal addition) ===
-        this.handleDeepLink();
-        window.addEventListener('hashchange', this.handleDeepLink.bind(this));
+        this.handleDeepLink(); // TODO: Delete
+        window.addEventListener('hashchange', this.handleDeepLink.bind(this)); // TODO: Delete
       }
     })
 

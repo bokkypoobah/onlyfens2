@@ -94,6 +94,7 @@
           <!-- <v-tab value="documents" class="text-none"><v-icon icon="mdi-file-document-multiple-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Documents" : "Docs" }}</v-tab> -->
           <!-- <v-tab value="fragments" class="text-none"><v-icon icon="mdi-text-box-multiple-outline" class="mr-2"></v-icon>Fragments</v-tab> -->
           <!-- <v-tab value="document" class="text-none"><v-icon icon="mdi-file-document-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Document" : "Doc" }}</v-tab> -->
+          <v-tab value="summary" class="text-none"><v-icon icon="mdi-sigma" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Summary" : "Summary" }}</v-tab>
           <v-tab value="names" class="text-none"><v-icon icon="mdi-alphabetical" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "ENS Names" : "Names" }}</v-tab>
           <v-tab value="config" class="text-none"><v-icon icon="mdi-cog-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Configuration" : "Config" }}</v-tab>
         </v-tabs>
@@ -114,11 +115,12 @@
           </v-alert>
 
           <v-toolbar flat color="grey-lighten-4" density="compact" class="ma-0 mt-1" style="position: sticky; top: 50px; z-index: 10; width: 100%;">
-            <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 300px" placeholder="name regex"></v-text-field>
+            <v-text-field v-if="settings.tab == 'summary' || settings.tab == 'names'" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 200px" placeholder="name regex"></v-text-field>
             <!-- <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.filter" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable @input="performKeywordSearch" @click:clear="performKeywordSearch" class="ma-1" style="max-width: 300px" placeholder="search terms"></v-text-field> -->
             <!-- <v-btn color="primary" icon density="comfortable" @click="settings.searchDialog = !settings.searchDialog; saveSettings();" v-tooltip="'Cmd+K or Ctrl-K - Search Dialog'">
               <v-icon :icon="settings.searchDialog ? 'mdi-feature-search' : 'mdi-feature-search-outline'" size="x-large"></v-icon>
             </v-btn> -->
+
             <v-spacer></v-spacer>
             <v-btn v-if="settings.tab == 'config'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
               <v-icon icon="mdi-plus" size="x-large"></v-icon>
@@ -132,6 +134,10 @@
             <!-- <v-chip v-if="settings.tab == 'fragments'" color="primary" variant="text" v-tooltip="'#search/#total fragments'">
               {{ filteredSortedFragments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ fragments.length }}</span>
             </v-chip> -->
+            <v-btn-toggle v-if="settings.tab == 'summary'" v-model="settings.summary.expiryOrGrace" border variant="outlined" divided density="compact">
+              <v-btn value="expiry">Expiry</v-btn>
+              <v-btn value="grace">Grace</v-btn>
+            </v-btn-toggle>
             <v-spacer></v-spacer>
             <v-select
               v-if="settings.tab == 'names'"
@@ -168,28 +174,6 @@
               color="primary"
             >
             </v-pagination>
-            <!-- <v-select
-              v-if="settings.tab == 'documents'"
-              v-model="settings.documents.sortOption"
-              @update:model-value="saveSettings();"
-              :items="docsSortOptions"
-              variant="plain"
-              density="compact"
-              class="mt-4 mr-2"
-              style="max-width: 150px;"
-            >
-            </v-select> -->
-            <!-- <v-select
-              v-if="settings.tab == 'fragments'"
-              v-model="settings.fragments.sortOption"
-              @update:model-value="saveSettings();"
-              :items="searchSortOptions"
-              variant="plain"
-              density="compact"
-              class="mt-4 mr-2"
-              style="max-width: 150px;"
-            >
-            </v-select> -->
           </v-toolbar>
 
           <!-- <div>
@@ -200,6 +184,11 @@
           </div> -->
 
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
+            <!-- SUMMARY TAB -->
+            <v-tabs-window-item value="summary" class="ma-1 pa-0">
+              Summary
+            </v-tabs-window-item>
+
             <!-- NAMES TAB -->
             <v-tabs-window-item value="names" class="ma-1 pa-0">
               <v-data-table
@@ -231,9 +220,12 @@
                 <template #item.status="{ item }">
                   <td class="text-center">{{ item.registrationStatus }}</td>
                 </template>
-                <template #item.enabled="{ item }">
-                  <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
+                <template #item.account="{ item }">
+                  <td class="text-center">{{ item.account }}</td>
                 </template>
+                <!-- <template #item.enabled="{ item }">
+                  <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
+                </template> -->
               </v-data-table>
             </v-tabs-window-item>
 
@@ -632,7 +624,7 @@
           fragmentIdIndex: {}, // TODO: Delete
 
           settings: {
-            tab: "names",
+            tab: "config",
             searchString: null,
             searchType: "advanced",
             nameFilter: null,
@@ -643,6 +635,11 @@
               readme: true,
               chronicles: true,
               other: true,
+            },
+            summary: {
+              expiryOrGrace: "expiry",
+              pageSize: 10,
+              sortOption: "nameasc",
             },
             names: {
               pageSize: 10,
@@ -662,7 +659,7 @@
               sortOption: "scoredsc",
             },
             searchDialog: false,
-            version: 2,
+            version: 3,
           },
           initialised: false,
           namesCurrentPage: 1,

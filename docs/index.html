@@ -187,7 +187,7 @@
                   <td class="text-center">{{ (accountsCurrentPage - 1) * settings.accounts.pageSize + index + 1 }}</td>
                 </template>
                 <template #item.enabled="{ item }">
-                  <v-checkbox-btn disabled v-model="item.enabled" hide-details></v-checkbox-btn>
+                  <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
                 </template>
               </v-data-table>
             </v-tabs-window-item>
@@ -860,6 +860,11 @@
           }
           console.log(now() + " addOrUpdateAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
           this.accountDialog.show = false;
+          this.saveSettings();
+        },
+        toggleAccountEnabled(event) {
+          console.log(now() + " toggleAccountEnabled - event: " + JSON.stringify(event, null, 2));
+          this.settings.accounts.data[event.account].enabled = !this.settings.accounts.data[event.account].enabled;
           this.saveSettings();
         },
         deleteAccount() {

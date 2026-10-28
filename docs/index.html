@@ -209,6 +209,24 @@
                 <template #item.number="{ index }">
                   <td class="text-center">{{ (namesCurrentPage - 1) * settings.names.pageSize + index + 1 }}</td>
                 </template>
+                <template #item.expiry="{ item }">
+                  <td class="text-center">{{ formatTimestamp(item.expiryDate) }}</td>
+                </template>
+                <template #item.grace="{ item }">
+                  <td class="text-center">{{ formatTimestamp(item.graceEndsAt) }}</td>
+                </template>
+                <template #item.premium="{ item }">
+                  <td class="text-center">{{ formatTimestamp(item.premiumEndsAt) }}</td>
+                </template>
+                <template #item.creation="{ item }">
+                  <td class="text-center">{{ formatTimestamp(item.creationDate) }}</td>
+                </template>
+                <template #item.registration="{ item }">
+                  <td class="text-center">{{ formatTimestamp(item.registrationDate) }}</td>
+                </template>
+                <template #item.status="{ item }">
+                  <td class="text-center">{{ item.registrationStatus }}</td>
+                </template>
                 <template #item.enabled="{ item }">
                   <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
                 </template>
@@ -673,6 +691,12 @@
             { value: "namedsc", title: "▼ Name" },
             { value: "expiryasc", title: "▲ Expiry" },
             { value: "expirydsc", title: "▼ Expiry" },
+            { value: "registrationasc", title: "▲ Registration" },
+            { value: "registrationdsc", title: "▼ Registration" },
+            { value: "creationasc", title: "▲ Creation" },
+            { value: "creationdsc", title: "▼ Creation" },
+            { value: "accountascnameasc", title: "▲ Account ▲ Name" },
+            { value: "accountdscnameasc", title: "▼ Account ▲ Name" },
           ],
           accountsSortOptions: [
             { value: "accountasc", title: "▲ Account" },
@@ -696,6 +720,10 @@
             { title: "#", key: "number", sortable: false },
             { title: "Name", key: "name", sortable: false },
             { title: "Expiry", key: "expiry", sortable: false },
+            { title: "Grace End", key: "grace", sortable: false },
+            { title: "Premium End", key: "premium", sortable: false },
+            { title: "Creation", key: "creation", sortable: false },
+            { title: "Registration", key: "registration", sortable: false },
             { title: "Status", key: "status", sortable: false },
             { title: "Account", key: "account", sortable: false },
           ],
@@ -742,6 +770,38 @@
           } if (this.settings.names.sortOption == "expirydsc") {
             results.sort((a, b) => {
               return b.expiryDate - a.expiryDate;
+            });
+          } if (this.settings.names.sortOption == "registrationasc") {
+            results.sort((a, b) => {
+              return a.registrationDate - b.registrationDate;
+            });
+          } if (this.settings.names.sortOption == "registrationdsc") {
+            results.sort((a, b) => {
+              return b.registrationDate - a.registrationDate;
+            });
+          } if (this.settings.names.sortOption == "creationasc") {
+            results.sort((a, b) => {
+              return a.creationDate - b.creationDate;
+            });
+          } if (this.settings.names.sortOption == "creationdsc") {
+            results.sort((a, b) => {
+              return b.creationDate - a.creationDate;
+            });
+          } if (this.settings.names.sortOption == "accountascnameasc") {
+            results.sort((a, b) => {
+              if (('' + a.account).localeCompare(b.account) == 0) {
+                return ('' + a.name).localeCompare(b.name);
+              } else {
+                return ('' + a.account).localeCompare(b.account);
+              }
+            });
+          } if (this.settings.names.sortOption == "accountdscnameasc") {
+            results.sort((a, b) => {
+              if (('' + a.account).localeCompare(b.account) == 0) {
+                return ('' + a.name).localeCompare(b.name);
+              } else {
+                return ('' + b.account).localeCompare(a.account);
+              }
             });
           }
           return results;
@@ -931,6 +991,14 @@
         },
       },
       methods: {
+
+        formatTimestamp(ts) {
+          if (ts != null) {
+            return moment.unix(ts).format("YYYY-MM-DD HH:mm:ss");
+          }
+          return null;
+        },
+
         async initDB() {
           this.db = new Dexie('onlyfens2v088a')
           this.db.version(1).stores({

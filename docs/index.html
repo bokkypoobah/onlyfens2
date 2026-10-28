@@ -668,7 +668,7 @@
             { value: 100, title: "100" },
             { value: 500, title: "500" },
           ],
-          namesSortOptions: [
+          namesSortOptions: [ // TODO: Add sorting by account then name
             { value: "nameasc", title: "▲ Name" },
             { value: "namedsc", title: "▼ Name" },
             { value: "expiryasc", title: "▲ Expiry" },
@@ -725,7 +725,26 @@
       },
       computed: {
         filteredSortedNames() {
-          return this.names;
+          const results = this.names;
+
+          if (this.settings.names.sortOption == "nameasc") {
+            results.sort((a, b) => {
+              return ('' + a.name).localeCompare(b.name);
+            });
+          } if (this.settings.names.sortOption == "namedsc") {
+            results.sort((a, b) => {
+              return ('' + b.name).localeCompare(a.name);
+            });
+          } if (this.settings.names.sortOption == "expiryasc") {
+            results.sort((a, b) => {
+              return a.expiryDate - b.expiryDate;
+            });
+          } if (this.settings.names.sortOption == "expirydsc") {
+            results.sort((a, b) => {
+              return b.expiryDate - a.expiryDate;
+            });
+          }
+          return results;
         },
         filteredSortedPagedNames() {
           const start = (this.namesCurrentPage - 1) * this.settings.names.pageSize;

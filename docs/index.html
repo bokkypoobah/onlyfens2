@@ -820,11 +820,12 @@
       },
       methods: {
         async initDB() {
-          this.db = new Dexie('Onlyfens2')
+          this.db = new Dexie('onlyfens2v088a')
           this.db.version(1).stores({
-            documents: '++id, filename, date, title, *keywords',
-            fragments: '++id, docId, date, type, heading, text',
-            metadata: 'key'
+            names: '[account+tokenId], name',
+            // documents: '++id, filename, date, title, *keywords',
+            // fragments: '++id, docId, date, type, heading, text',
+            // metadata: 'key'
           }).upgrade(tx => {
             console.log(now() + " initDB - Upgrading IndexedDB and clearing old tables");
             for (const table of tx.storeNames) {
@@ -1183,16 +1184,22 @@
         //   "compromised": null
         // }
 
+        // this.db.version(1).stores({
+        //   names: '[owner+tokenId]',
+
         async syncIt() {
           const PAGESIZE = 100;
-          // console.log(now() + " syncIt");
+          const retrievedAt = moment().unix();
+          console.log(now() + " syncIt - retrievedAt: " + retrievedAt + " " + moment.unix(retrievedAt).format());
           this.sync.info = "Syncing";
           this.sync.total = null;
           this.sync.completed = 0;
-          for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
+          for (const [accountString, accountData] of Object.entries(this.settings.accounts.data)) {
             if (accountData.enabled) {
+              const account = ethers.utils.getAddress(accountString);
               console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
               this.sync.info = "Syncing " + account + " " + accountData.name;
+              let names = [];
               let done = false;
               let page = 1;
               do {
@@ -1202,10 +1209,11 @@
                 if (response.success) {
                   for (const result of response.data.results) {
                     console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
-                    const record = {
-                      id: result.id,
-                      name: result.name,
+                    const name = {
+                      account,
                       tokenId: result.token_id,
+                      externalId: result.id,
+                      name: result.name,
                       owner: ethers.utils.getAddress(result.owner),
                       expiryDate: moment(result.expiry_date).unix(),
                       // expiryDateString: moment(result.expiry_date),
@@ -1214,20 +1222,30 @@
                       premiumEndsAt: moment(result.premium_ends_at).unix(),
                       registrationDate: moment(result.registration_date).unix(),
                       creationDate: moment(result.creation_date).unix(),
+                      retrievedAt,
                     };
-                    console.log(now() + " syncIt - processing - record: " + JSON.stringify(record, null, 2));
+                    console.log(now() + " syncIt - processing - name: " + JSON.stringify(name, null, 2));
+                    names.push(name);
                   }
                   console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
                   this.sync.completed += response.data.results.length;
                 }
                 done = !response || !response.success || !response.data.pagination.hasNext;
                 // TODO: Testing
-                done = true;
+                // done = true;
                 if (!done) {
                   page++;
                   await delay(2000);
                 }
               } while (!done);
+              console.log(now() + " syncIt - processing - names: " + JSON.stringify(names, null, 2));
+
+              const deleteCall = await this.db.names.where("[account+tokenId]").between([account, Dexie.minKey], [account, Dexie.maxKey]).delete();
+              console.log(now() + " syncIt - processing - deleteCall: " + JSON.stringify(deleteCall, null, 2));
+
+              const bulkAddCall = await this.db.names.bulkAdd(names);
+              console.log(now() + " syncIt - processing - bulkAddCall: " + JSON.stringify(bulkAddCall, null, 2));
+
             }
           }
           this.sync.info = null;

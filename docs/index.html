@@ -882,7 +882,6 @@
 
 
         async refreshData() {
-
           const termsInfo = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
           const currentTime = moment();
           const terms = [];
@@ -894,7 +893,26 @@
           console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));
           this.terms = terms;
 
-          this.names = await this.db.names.toArray();
+          const rawNames = await this.db.names.toArray();
+          const names = [];
+          for (const name of rawNames) {
+            let expiryTermIndex = null;
+            let graceEndsAtTermIndex = null;
+            for (let i = 0; i < terms.length; i++) {
+              if (terms[i].endDate > name.expiryDate) {
+                expiryTermIndex = i;
+                break;
+              }
+            }
+            for (let i = 0; i < terms.length; i++) {
+              if (terms[i].endDate > name.graceEndsAt) {
+                graceEndsAtTermIndex = i;
+                break;
+              }
+            }
+            names.push({ ...name, expiryTermIndex, graceEndsAtTermIndex });
+          }
+          this.names = names;
           // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
 
           // await this.applyFilter();
@@ -961,7 +979,7 @@
             }
           }
           this.sync.info = null;
-          this.names = await this.db.names.toArray();
+          await this.refreshData();
         },
 
         // async performKeywordSearch() { // TODO: To use with nameFilter

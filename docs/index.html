@@ -186,7 +186,9 @@
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
             <!-- SUMMARY TAB -->
             <v-tabs-window-item value="summary" class="ma-1 pa-0">
-              Summary
+              <pre>
+{{ JSON.stringify(filteredSortedSummary, null, 2) }}
+              </pre>
             </v-tabs-window-item>
 
             <!-- NAMES TAB -->
@@ -758,6 +760,17 @@
         }
       },
       computed: {
+        filteredSortedSummary() {
+          const results = [];
+          const terms = [[1, "d"], [2, "d"], [3, "d"], [4, "d"], [5, "d"], [6, "d"], [7, "d"], [2, "w"], [3, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [4, "y"], [5, "y"], [10, "y"], [1000, "y"]];
+          const now = moment();
+          for (const term of terms) {
+            const endDate = now.clone().add(term[0], term[1]);
+            results.push([term[0] + term[1], formatLocalTime(endDate.unix())]);
+          }
+          return results;
+        },
+
         filteredSortedNames() {
           let regex = null;
           if (this.settings.nameFilter != null && this.settings.nameFilter.length > 0) {

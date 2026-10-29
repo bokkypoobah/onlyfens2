@@ -23,17 +23,10 @@
   <link href="css/vuetify_3.9.5.min.css" rel="stylesheet">
   <link href="css/materialdesignicons_7.4.47.min.css" rel="stylesheet">
   <link href="fonts/materialdesignicons-webfont.woff2" rel="stylesheet">
-  <!-- <link href="css/highlight_11.11.1.css" rel="stylesheet"> -->
-  <!-- <link href="css/github.css" rel="stylesheet"> -->
   <script src="js/vue_3.5.29.prod.js"></script>
   <script src="js/vuetify_3.9.5.min.js"></script>
-  <!-- <script src="js/marked_18.0.0.umd.js"></script> -->
-  <!-- <script src="js/marked-gfm-heading-id_4.1.4.umd.js"></script> -->
   <script src="js/dexie_4.3.0.min.js"></script>
   <script src="js/moment_2.24.0.min.js"></script>
-  <!-- <script src="js/minisearch_7.2.0.js"></script> -->
-  <!-- <script src="js/highlight_11.11.1.js"></script> -->
-  <!-- <script src="js/stopwords.js"></script> -->
   <script src="js/ethers_5.8.0.umd.min.js" type="application/javascript"></script>
 
   <style>
@@ -84,16 +77,9 @@
           <v-icon>mdi-refresh</v-icon>
           Sync
         </v-btn>
-        <!-- <v-btn v-if="sync.info == null" :disabled="sync.info != null" @click="testIt" text size="large" color="secondary" variant="text" class="text-none">
-          <v-icon>mdi-emoticon-cool-outline</v-icon>
-          Test
-        </v-btn> -->
         <v-progress-circular v-if="sync.info != null" color="primary" :model-value="sync.total ? (parseInt(sync.completed * 100 / sync.total)) : 0" :size="30" :width="6" v-tooltip="sync.completed + (sync.total ? ('/' + sync.total) : '') + ': ' + sync.info"></v-progress-circular>
         <v-spacer></v-spacer>
         <v-tabs v-model="settings.tab" @update:model-value="saveSettings();" color="primary">
-          <!-- <v-tab value="documents" class="text-none"><v-icon icon="mdi-file-document-multiple-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Documents" : "Docs" }}</v-tab> -->
-          <!-- <v-tab value="fragments" class="text-none"><v-icon icon="mdi-text-box-multiple-outline" class="mr-2"></v-icon>Fragments</v-tab> -->
-          <!-- <v-tab value="document" class="text-none"><v-icon icon="mdi-file-document-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Document" : "Doc" }}</v-tab> -->
           <v-tab value="summary" class="text-none"><v-icon icon="mdi-sigma" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Summary" : "Summary" }}</v-tab>
           <v-tab value="names" class="text-none"><v-icon icon="mdi-alphabetical" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "ENS Names" : "Names" }}</v-tab>
           <v-tab value="config" class="text-none"><v-icon icon="mdi-cog-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Configuration" : "Config" }}</v-tab>
@@ -103,7 +89,7 @@
       <v-main>
         <v-container fluid class="ma-0 pa-0">
 
-          <v-alert
+          <!-- <v-alert
             v-if="initialised && Object.keys(documents).length == 0 && false"
             closable
             title="Info"
@@ -112,7 +98,7 @@
             color="info"
             class="mx-0 my-1"
           >
-          </v-alert>
+          </v-alert> -->
 
           <v-toolbar flat color="grey-lighten-4" density="compact" class="ma-0 mt-1" style="position: sticky; top: 50px; z-index: 10; width: 100%;">
             <v-text-field v-if="settings.tab == 'summary' || settings.tab == 'names'" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 200px" placeholder="name regex"></v-text-field>
@@ -126,15 +112,13 @@
             <v-btn v-if="settings.tab == 'config'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
               <v-icon icon="mdi-plus" size="x-large"></v-icon>
             </v-btn>
+            <v-spacer></v-spacer>
             <v-chip v-if="settings.tab == 'names'" color="primary" variant="text" v-tooltip="'#search/#total names'">
               {{ filteredSortedNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
             </v-chip>
-            <!-- <v-chip v-if="settings.tab == 'documents'" color="primary" variant="text" v-tooltip="'#search/#total documents'">
-              {{ filteredSortedDocuments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ documents.length }}</span>
-            </v-chip> -->
-            <!-- <v-chip v-if="settings.tab == 'fragments'" color="primary" variant="text" v-tooltip="'#search/#total fragments'">
-              {{ filteredSortedFragments.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ fragments.length }}</span>
-            </v-chip> -->
+            <v-chip v-if="settings.tab == 'config'" color="primary" variant="text" v-tooltip="'#search/#total accounts'">
+              {{ filteredSortedAccounts.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ Object.keys(settings.accounts.data).length }}</span>
+            </v-chip>
             <v-btn-toggle v-if="settings.tab == 'summary'" v-model="settings.summary.expiryOrGrace" border variant="outlined" divided density="compact">
               <v-btn value="expiry">Expiry</v-btn>
               <v-btn value="grace">Grace</v-btn>
@@ -272,93 +256,6 @@
                 </template>
               </v-data-table>
             </v-tabs-window-item>
-
-            <!-- TODO: Delete -->
-            <!-- DOCUMENTS TAB -->
-            <v-tabs-window-item value="documents" class="ma-1 pa-0">
-              <v-data-table
-                :items="filteredSortedPagedDocuments"
-                :headers="docHeaders"
-                :items-per-page="-1"
-                hide-default-footer
-                class="elevation-1"
-              >
-                <template v-slot:item.title="{ item }">
-                  <a href="#" @click.prevent="viewDocument(item)">{{ item.title }}</a>
-                </template>
-                <template v-slot:item.keywords="{ item }">
-                  <div class="d-flex flex-wrap">
-
-                    <!-- <v-menu :close-on-content-click="false" location="end"> -->
-                      <!-- <template v-slot:activator="{ props }"> -->
-                        <v-chip v-for="(kw, i) in item.keywords.slice(0, 20)" :key="i" size="x-small" class="ma-1">
-                          {{ kw[0] + ' ' + kw[1] }}
-                        </v-chip>
-                      <!-- </template> -->
-                      <!-- <v-card min-width="300">
-                        Blah
-                      </v-card> -->
-
-                    <!-- </v-menu> -->
-
-                    <v-chip
-                      v-if="item.keywords.length > 20"
-                      size="x-small"
-                      class="ma-1"
-                      color="grey"
-                      @click="showAllKeywords(item)"
-                    >
-                      +{{ item.keywords.length - 20 }} more
-                    </v-chip>
-                  </div>
-                </template>
-              </v-data-table>
-            </v-tabs-window-item>
-
-            <!-- TODO: Delete -->
-            <!-- FRAGMENTS SEARCH TAB -->
-            <v-tabs-window-item value="fragments" class="ma-1 pa-0">
-              <v-data-iterator :items="filteredSortedPagedFragments">
-                <template v-slot:default="{ items }">
-                  <!-- :title="`Item ${index} x`" -->
-                  <v-list-item v-for="(item, index) in items" :key="i">
-                    <v-card>
-                      <v-card-title class="text-wrap">
-                        <h5>
-                          <!-- {{ item.raw.counters[1] + (item.raw.counters[2] ? ("." + item.raw.counters[2]) : "") }} -->
-                          <div v-html="markTitle(item)" class="markdown-content ma-0 pa-0 px-3"></div>
-                        </h5>
-                      </v-card-title>
-                      <v-card-text>
-                        <div class="ma-0 mb-3 pa-0 px-3">
-                          <v-chip density="compact" size="small" variant="plain" @click="showFragmentMenuDialog(item.raw);">
-                            {{ item.raw.docFilename }}
-                          </v-chip>
-                        </div>
-                        <!-- {{ item.raw }} -->
-                        <div v-html="markText(item)" class="markdown-content ma-0 pa-0 px-3"></div>
-                        <!-- <a href="#" @click.prevent="viewSearchItem(item)">{{ item.raw.title }}</a> -->
-                        <!-- <font size="-2">
-                          <pre>
-{{ markText(item) }}
-                          </pre>
-                        </font> -->
-                        <!-- <font size="-2">
-                          <pre>
-{{ item }}
-                          </pre>
-                        </font> -->
-                      </v-card-text>
-                    </v-card>
-                  </v-list-item>
-                </template>
-              </v-data-iterator>
-            </v-tabs-window-item>
-
-            <!-- TODO: Delete -->
-            <v-tabs-window-item value="document" class="ma-1 pa-0">
-              <div id="modal-body" v-html="viewerHtml" class="markdown-content ma-0 mx-3 pa-0 px-3"></div>
-            </v-tabs-window-item>
           </v-tabs-window>
 
           <v-toolbar v-if="settings.tab != 'document' || true" flat color="grey-lighten-4" density="compact" class="ma-0 mt-1">
@@ -412,7 +309,7 @@
       </v-main>
 
       <!-- Search Dialog -->
-      <v-dialog v-model="settings.searchDialog" @update:model-value="saveSettings();" max-width="600">
+      <!-- <v-dialog v-model="settings.searchDialog" @update:model-value="saveSettings();" max-width="600">
         <v-card width="380" class="mx-auto">
           <v-toolbar flat density="compact" class="text-h6">
             <v-toolbar-title>Search</v-toolbar-title>
@@ -425,7 +322,6 @@
             <v-text-field id="filter" v-model="settings.filter" @input="performKeywordSearch" @click:clear="performKeywordSearch" density="compact" prepend-inner-icon="mdi-magnify" clearable></v-text-field>
             <v-radio-group v-model="settings.searchType" @update:model-value="applyFilter();" label="Type" inline class="ma-0">
               <v-radio label="Advanced" value="advanced" v-tooltip="'Search using the MiniSearch.js library'"></v-radio>
-              <!-- <v-radio label="String" value="string" v-tooltip="'Simple string search'"></v-radio> -->
               <v-radio label="Regex" value="regex" v-tooltip="'Search using Regex patterns'"></v-radio>
             </v-radio-group>
             <v-radio-group :disabled="settings.searchType != 'advanced'" v-model="settings.fuzzyLevel" @update:model-value="applyFilter();" label="Fuzzy Level" inline class="ma-0">
@@ -440,10 +336,10 @@
             <v-checkbox-btn v-model="settings.search.other" @update:model-value="applyFilter();" label="Other .md files" hide-details v-tooltip="'docs/{other}.md'"></v-checkbox-btn>
           </v-card-text>
         </v-card>
-      </v-dialog>
+      </v-dialog> -->
 
       <!-- Account Dialog -->
-      <v-dialog v-model="accountDialog.show" persistent max-width="600">
+      <!-- <v-dialog v-model="accountDialog.show" persistent max-width="600">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
             <v-toolbar-title>{{ accountDialog.new ? "Add Account" : "Edit Account" }}</v-toolbar-title>
@@ -464,10 +360,10 @@
             <v-btn v-if="!accountDialog.new" color="primary" @click="addOrUpdateAccount">Update</v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+      </v-dialog> -->
 
       <!-- Document / QA Viewer Dialog -->
-      <v-dialog v-model="viewerDialog" scrollable height="90vh">
+      <!-- <v-dialog v-model="viewerDialog" scrollable height="90vh">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
             <v-toolbar-title>{{ viewerTitle }}</v-toolbar-title>
@@ -488,30 +384,19 @@
           >
             <div id="modal-body" v-html="viewerHtml" class="markdown-content ma-0 pa-0 px-3"></div>
           </v-card-text>
-
-          <!-- <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="viewerDialog = false">Close</v-btn>
-          </v-card-actions> -->
         </v-card>
-      </v-dialog>
+      </v-dialog> -->
 
       <!-- Fragment Menu Dialog -->
-      <v-dialog v-model="fragmentMenuDialog.show" max-width="800">
+      <!-- <v-dialog v-model="fragmentMenuDialog.show" max-width="800">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
-            <!-- <v-toolbar-title>{{ viewerTitle }}</v-toolbar-title> -->
             <v-toolbar-title class="flex-grow-1 text-truncate">{{ fragmentMenuDialog.item.docFilename }}</v-toolbar-title>
             <v-btn icon text @click="fragmentMenuDialog.show = false">
               <v-icon color="primary">mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
-          <!-- <v-card-text class="d-flex justify-center ma-0 pa-0"> -->
           <v-card-text>
-            <!-- https://github.com/bokkypoobah/TheBokkyBible/blob/main/docs/20260214_WhyIsThereNoOilInThisHydraulicJack.md?plain=1#L189 -->
-            <!-- https://github.com/bokkypoobah/TheBokkyBible/blob/main/docs/20260214_WhyIsThereNoOilInThisHydraulicJack.md -->
-            <!-- <v-btn href="https://github.com/bokkypoobah/TheBokkyBible" target="_blank" color="primary" variant="plain" class="text-none" density="compact">The Bokky Bible v0.95</v-btn> -->
-
             <v-row class="align-start mb-4">
               <v-col cols="2" class="text-right">
                 <label for="document-field">Fragment:</label>
@@ -544,29 +429,19 @@
                 <a :href="'https://github.com/bokkypoobah/TheBokkyBible/blob/main/docs/' + fragmentMenuDialog.item.docFilename" target="_blank" id="document-title-field">{{ fragmentMenuDialog.item.docTitle }}</a>
               </v-col>
             </v-row>
-
             <v-btn :href="'https://github.com/bokkypoobah/TheBokkyBible/blob/main/docs/' + fragmentMenuDialog.item.docFilename" target="_blank" color="primary" variant="plain" class="text-none" density="compact">{{ fragmentMenuDialog.item.docFilename }}</v-btn>
-
             <pre>
 {{ fragmentMenuDialog.item }}
             </pre>
-            <!-- <div id="modal-body" v-html="viewerHtml" class="markdown-content ma-0 pa-0 px-3"></div> -->
           </v-card-text>
-
-          <!-- <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn @click="viewerDialog = false">Close</v-btn>
-          </v-card-actions> -->
         </v-card>
-      </v-dialog>
+      </v-dialog> -->
 
       <v-footer v-if="$vuetify.display.mdAndUp" app border dark class="pa-0">
         <v-btn href="https://github.com/bokkypoobah/onlyfens2" target="_blank" color="primary" variant="plain" class="text-none" density="compact">Onlyfens 2</v-btn>
         <v-spacer></v-spacer>
         <span class="mt-0">Created by</span>
         <v-btn href="https://x.com/BokkyPooBah" target="_blank" color="primary" variant="plain" class="text-none pa-1" density="compact">BokkyPooBah</v-btn>
-        <!-- <span class="mt-0">and</span> -->
-        <!-- <v-btn href="https://x.com/grok/" target="_blank" color="primary" variant="plain" class="text-none pa-1 pr-3" density="compact">Grok AI</v-btn> -->
       </v-footer>
 
     </v-app>
@@ -736,18 +611,6 @@
             { value: "nameasc", title: "▲ Name" },
             { value: "namedsc", title: "▼ Name" },
           ],
-          docsSortOptions: [
-            { value: "datedsc", title: "▼ Date" },
-            { value: "dateasc", title: "▲ Date" },
-            { value: "scoredsc", title: "▼ Score" },
-            { value: "scoreasc", title: "▲ Score" },
-          ],
-          searchSortOptions: [
-            { value: "datedsc", title: "▼ Date" },
-            { value: "dateasc", title: "▲ Date" },
-            { value: "scoredsc", title: "▼ Score" },
-            { value: "scoreasc", title: "▲ Score" },
-          ],
           nameHeaders: [
             { title: "#", key: "number", sortable: false },
             { title: "Name", key: "name", sortable: false },
@@ -764,16 +627,6 @@
             { title: "Account", key: "account", sortable: false },
             { title: "Name", key: "name", sortable: false },
             { title: "Enabled", key: "enabled", sortable: false }
-          ],
-          docHeaders: [
-            { title: "Date", key: "date", sortable: false },
-            { title: "Title", key: "title", sortable: false },
-            { title: "Keywords", key: "keywords", sortable: false }
-          ],
-          searchHeaders: [
-            { title: "Type", key: "type", sortable: false },
-            { title: "Date", key: "date", sortable: false },
-            { title: "Title", key: "title", sortable: false }
           ],
           sync: {
             info: null,
@@ -965,167 +818,6 @@
           // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
-
-        filteredSortedDocuments() { // TODO: Delete
-          let results = [];
-          if (this.filteredDocuments && this.settings.searchType == "advanced") {
-            results = this.filteredDocuments.map(q => ({
-              id: q.id,
-              filename: q.filename,
-              date: q.date,
-              title: q.title,
-              score: q.score,
-              terms: q.terms,
-              queryTerms: q.queryTerms,
-              match: q.match,
-              content: q.content,
-              keywords: getKeywordsAsSortedList(q.keywords),
-            }));
-          } else {
-            results = this.documents.map(q => ({
-              id: q.id,
-              filename: q.filename,
-              date: q.date,
-              title: q.title,
-              score: 1,
-              terms: [],
-              queryTerms: [],
-              match: {},
-              content: q.content,
-              keywords: getKeywordsAsSortedList(q.keywords),
-            }));
-            if (this.settings.searchType == "regex" && this.settings.filter) {
-              const regex = new RegExp(this.settings.filter, 'i');
-              results = results
-                .filter((i) => { return regex.test(i.title) || regex.test(i.content); });
-            }
-          }
-          if (this.settings.documents.sortOption == "datedsc") {
-            results.sort((a, b) => {
-              return b.id - a.id;
-            });
-          } else if (this.settings.documents.sortOption == "dateasc") {
-            results.sort((a, b) => {
-              return a.id - b.id;
-            });
-          } else if (this.settings.documents.sortOption == "scoredsc") {
-            results.sort((a, b) => {
-              if (a.score == b.score) {
-                return b.id - a.id;
-              } else {
-                return b.score - a.score;
-              }
-            });
-          } else if (this.settings.documents.sortOption == "scoreasc") {
-            results.sort((a, b) => {
-              if (a.score == b.score) {
-                return a.id - b.id;
-              } else {
-                return a.score - b.score;
-              }
-            });
-          }
-          return results;
-        },
-        filteredSortedPagedDocuments() { // TODO: Delete
-          const start = (this.documentsCurrentPage - 1) * this.settings.documents.pageSize;
-          const results = this.filteredSortedDocuments.slice(start, start + this.settings.documents.pageSize);
-          // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          return results;
-        },
-
-        filteredSortedFragments() { // TODO: Delete
-          let results = [];
-          if (this.filteredFragments && this.settings.searchType == "advanced") {
-            results = this.filteredFragments.map(q => {
-              const documentIndex = this.documentIdIndex[q.docId];
-              const document = documentIndex != null && this.documents[documentIndex] || null;
-              return {
-                id: q.id,
-                docId: q.docId,
-                docTitle: document && document.title || null,
-                docFilename: document && document.filename || null,
-                date: q.date,
-                lineNumber: q.lineNumber,
-                headingLevel: q.headingLevel,
-                counters: q.counters,
-                type: q.type,
-                title: q.heading,
-                score: q.score,
-                terms: q.terms,
-                queryTerms: q.queryTerms,
-                match: q.match,
-                text: q.text,
-                keywords: getKeywordsAsSortedList(q.keywords),
-              };
-            });
-          } else if (this.fragments) {
-            results = this.fragments
-              .filter((result) => { return (result.docType === "readme" && this.settings.search.readme) || (result.docType === "chronicle" && this.settings.search.chronicles) || (result.docType === "other" && this.settings.search.other); })
-              .map(q => {
-                const documentIndex = this.documentIdIndex[q.docId];
-                const document = documentIndex != null && this.documents[documentIndex] || null;
-                return {
-                  id: q.id,
-                  docId: q.docId,
-                  docTitle: document && document.title || null,
-                  docFilename: document && document.filename || null,
-                  date: q.date,
-                  lineNumber: q.lineNumber,
-                  headingLevel: q.headingLevel,
-                  counters: q.counters,
-                  type: q.type,
-                  title: q.heading,
-                  score: 1,
-                  terms: [],
-                  queryTerms: [],
-                  match: {},
-                  text: q.text,
-                  keywords: getKeywordsAsSortedList(q.keywords),
-                };
-              });
-            if (this.settings.searchType == "regex" && this.settings.filter) {
-              const regex = new RegExp(this.settings.filter, 'i');
-              results = results
-                .filter((i) => { return regex.test(i.title) || regex.test(i.text); });
-            }
-          }
-          if (this.settings.fragments.sortOption == "datedsc") {
-            results.sort((a, b) => {
-              return b.id - a.id;
-            });
-          } else if (this.settings.fragments.sortOption == "dateasc") {
-            results.sort((a, b) => {
-              return a.id - b.id;
-            });
-          } else if (this.settings.fragments.sortOption == "scoredsc") {
-            results.sort((a, b) => {
-              if (a.score == b.score) {
-                return b.id - a.id;
-              } else {
-                return b.score - a.score;
-              }
-            });
-          } else if (this.settings.fragments.sortOption == "scoreasc") {
-            results.sort((a, b) => {
-              if (a.score == b.score) {
-                return a.id - b.id;
-              } else {
-                return a.score - b.score;
-              }
-            });
-          }
-          return results;
-        },
-        filteredSortedPagedFragments() { // TODO: Delete
-          const start = (this.fragmentsCurrentPage - 1) * this.settings.fragments.pageSize;
-          const results = this.filteredSortedFragments.slice(start, start + this.settings.fragments.pageSize);
-          // console.log(now() + " filteredSortedPagedFragments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          return results;
-        },
-        stopWords() { // TODO: Delete
-          return new Set(STOPWORDS);
-        },
       },
       methods: {
 
@@ -1140,9 +832,6 @@
           this.db = new Dexie('onlyfens2v088a')
           this.db.version(1).stores({
             names: '[account+tokenId], name',
-            // documents: '++id, filename, date, title, *keywords',
-            // fragments: '++id, docId, date, type, heading, text',
-            // metadata: 'key'
           }).upgrade(tx => {
             console.log(now() + " initDB - Upgrading IndexedDB and clearing old tables");
             for (const table of tx.storeNames) {
@@ -1191,209 +880,6 @@
           this.saveSettings();
         },
 
-        async getLatestCommit() { // TODO: Delete
-          const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${BRANCH}`);
-          const data = await res.json();
-          return { sha: data && data.sha || null, timestamp: data && data.commit && data.commit.author && data.commit.author.date && moment(data.commit.author.date).unix() || null };
-        },
-
-        async listMarkdownFiles() { // TODO: Delete
-          const url = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
-          const res = await fetch(url);
-          const data = await res.json();
-          return data.tree
-            .filter(item => item.type === 'blob' && item.path.endsWith('.md') && /^docs\//.test(item.path) && !/GlobalTableOfContent/.test(item.path))
-            .map(item => ({ path: item.path, name: item.path.substring(5,), sortKey: item.path === "docs/README.md" ? 0 : (/^docs\/\d{8}_/.test(item.path) ? 2 : 1) /*, slug: item.path.replace(/\.md$/, '')*/ }))
-            .sort((a,b) => (a.sortKey + a.path).localeCompare(b.sortKey + b.path));
-        },
-
-        async loadAllFiles() { // TODO: Delete
-          // const files = (await this.listMarkdownFiles()).filter(item => /^202604/.test(item.name));
-          const files = await this.listMarkdownFiles();
-
-          await this.db.documents.clear();
-          await this.db.fragments.clear();
-
-          this.sync.total = files.length;
-          this.sync.completed = 0;
-          for (const file of files) {
-            this.sync.info = "Processing " + file.path;
-            const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${file.path}`
-            const text = await (await fetch(rawUrl)).text()
-            await this.processFile(file, text);
-            this.sync.completed++;
-          }
-          this.refreshData();
-        },
-
-        async processFile(file, text) { // TODO: Delete
-          const isChronicle = /^\d{8}_/.test(file.name);
-          // const date = isChronicle ? moment(file.name.split('_')[0], "YYYYMMDD").unix() : null;
-          // console.log(now() + " processFile - isChronicle: " + isChronicle + ", file.path: " + file.path + ", date: " + (date && date.toString() || "") + " " + (date && formatLocalTime(date) || file.name));
-          const date = isChronicle ? file.name.split('_')[0] : null;
-          console.log(now() + " processFile - isChronicle: " + isChronicle + ", file.path: " + file.path + ", date: " + (date || file.name));
-
-          const lines = text.split("\n");
-
-          let title = null;
-          for (let line of lines) {
-            if (line.startsWith('## ')) {
-              title = line.replace('## ', '').trim();
-              break;
-            }
-          }
-          const docType = isChronicle ? "chronicle" : (file.name == "README.md" ? "readme" : "other");
-          const keywords = this.extractKeywordsWithCounts(text);
-          const doc = {
-            docType,
-            filename: file.name,
-            date: date || file.name,
-            title: title || file.name,
-            content: text,
-            keywords,
-          };
-          const docId = await this.db.documents.add(doc);
-
-          let inCodeBlock = false;
-          let fragments = [];
-          let currentFragment = null;
-          let lineNumber = 0;
-          let counters = [ 0, 0, 0 ];
-          let previousHeading = null;
-          for (const [index, line] of lines.entries()) {
-            lineNumber = index + 1;
-            if (line.trim().startsWith('```')) {
-              inCodeBlock = !inCodeBlock;
-            }
-            if (inCodeBlock) {
-              currentFragment.text += line + "\n";
-              continue;
-            }
-            if (line.match(/^#{1,3}\s+(.+)$/)) {
-              if (currentFragment) {
-                currentFragment.text = currentFragment.text
-                  .replace(/<br\s*\/>\s*---\s*<table[^>]*>[\s\S]*?<\/table>\s*$/, "")
-                  .replace(/<br\s*\/>\s*---\s*$/, "")
-                  .replace(/<br\s*\/>\s*$/, "")
-                  .trim();
-                fragments.push(currentFragment);
-              }
-              const headingLevel = countHashes(line);
-              if (headingLevel > 0 && headingLevel <= 3) {
-                // TODO: Could add check that lower level is not being set for the first time if the higher levels have been used
-                counters[headingLevel - 1]++;
-                for (let i = headingLevel + 1; i <= 3; i++) {
-                  counters[i - 1] = 0;
-                }
-              }
-              const heading = line.replace(/^#{1,3}\s+/gm, "");
-              let type = "section";
-              if (previousHeading == null) {
-                // First heading
-                if (isChronicle) {
-                  type = "heading";
-                } else if (heading.match(/^\s*Global Table Of Content\s*$/i)) {
-                  type = "toc";
-                }
-                previousHeading = heading;
-              } else {
-                if (isChronicle) {
-                  if (heading.match(/^\s*Table Of Content\s*$/i)) {
-                    type = "toc";
-                  } else {
-                    type = "qa";
-                  }
-                }
-              }
-              currentFragment = {
-                lineNumber,
-                heading,
-                headingLevel,
-                counters: [ ...counters ],
-                type,
-                text: "",
-              };
-            } else {
-              if (currentFragment) {
-                currentFragment.text += line + "\n";
-              }
-            }
-          }
-          if (currentFragment) {
-            currentFragment.text = currentFragment.text
-              .replace(/<br\s*\/>\s*---\s*<table[^>]*>[\s\S]*?<\/table>\s*$/, "")
-              .replace(/<br\s*\/>\s*---\s*$/, "")
-              .replace(/<br\s*\/>\s*$/, "")
-              .trim();
-            fragments.push(currentFragment);
-          }
-          console.log(now() + " line# | level |  l1 |  l2 |  l3 | type    | heading                                            | text                                               | ");
-          console.log(now() + " ----- | ----- | --- | --- | --- | ------- | -------------------------------------------------- | -------------------------------------------------- | ");
-          for (let fragment of fragments) {
-            console.log(now() + " " +
-              padLeft("" + fragment.lineNumber, 5) + " | " +
-              padLeft("" + fragment.headingLevel, 5) + " | " +
-              padLeft("" + fragment.counters[0], 3) + " | " +
-              padLeft("" + fragment.counters[1], 3) + " | " +
-              padLeft("" + fragment.counters[2], 3) + " | " +
-              padRight(fragment.type, 7) + " | " +
-              padRight(fragment.heading.substring(0, 50), 50) + " | " +
-              padRight(fragment.text.replace(/\n/g, "↵").substring(0, 50), 50) + " | "
-            );
-            const keywords = this.extractKeywordsWithCounts(fragment.heading + " " + fragment.text);
-            await this.db.fragments.add({
-              docId,
-              docType,
-              date: date || file.name,
-              lineNumber: fragment.lineNumber,
-              headingLevel: fragment.headingLevel,
-              counters: fragment.counters,
-              type: fragment.type,
-              heading: fragment.heading,
-              text: fragment.text,
-              keywords,
-            });
-          }
-        },
-
-        // async testIt() {
-        //   console.log(now() + " testIt");
-        //   // const files = (await this.listMarkdownFiles()).filter(item => /^20260222/.test(item.name));
-        //   const files = (await this.listMarkdownFiles());
-        //   await this.db.documents.clear();
-        //   await this.db.fragments.clear();
-        //   this.sync.total = files.length;
-        //   this.sync.completed = 0;
-        //   for (const file of files) {
-        //     this.sync.info = "Processing " + file.path;
-        //     const rawUrl = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/${file.path}`
-        //     const text = await (await fetch(rawUrl)).text()
-        //     await this.processFile(file, text);
-        //     this.sync.completed++;
-        //   }
-        //   this.sync.info = "Refreshing data";
-        //   this.refreshData();
-        //   this.sync.info = null;
-        // },
-
-        extractKeywordsWithCounts(text) { // TODO: Delete
-          let results = text.toLowerCase()
-            .replace(/[^\w\s]/g, ' ')
-            .split(/\s+/)
-            .filter(w => (w.length > 1 && !this.stopWords.has(w)));
-          const keywordsWithCounts = {};
-          results.forEach(w => {
-            keywordsWithCounts[w] = keywordsWithCounts[w] && (keywordsWithCounts[w] + 1) || 1;
-          });
-          // console.log(now() + " extractKeywordsWithCounts - keywordsWithCounts[" + Object.keys(keywordsWithCounts).length + "]: " + JSON.stringify(keywordsWithCounts, null, 2));
-          return keywordsWithCounts;
-        },
-
-        showAllKeywords(item) { // TODO: Delete
-          const all = item.keywords.map(e => e[0] + ' ' + e[1]).join(' • ');
-          alert(`All keywords for this item:\n\n${all}`);
-          // Or upgrade to a nice v-dialog if you want fancier
-        },
 
         async refreshData() {
 
@@ -1411,113 +897,9 @@
           this.names = await this.db.names.toArray();
           // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
 
-          // this.documents = await this.db.documents.toArray();
-          // this.fragments = await this.db.fragments.toArray();
-          // this.documentIdIndex = this.documents.reduce((acc, record, index) => {
-          //   acc[record.id] = index;
-          //   return acc;
-          // }, {});
-          // // console.log(now() + " refreshData - this.documentIdIndex: " + JSON.stringify(this.documentIdIndex, null, 2));
-          // this.fragmentIdIndex = this.fragments.reduce((acc, record, index) => {
-          //   acc[record.id] = index;
-          //   return acc;
-          // }, {});
-          // // console.log(now() + " refreshData - this.fragmentIdIndex: " + JSON.stringify(this.fragmentIdIndex, null, 2));
-
-          // // Index all documents
-          // console.log(now() + " refreshData - documents start: " + this.documents.length);
-          // documentsMiniSearch = new MiniSearch({
-          //   fields: ['title', 'content'], // fields to index for full-text search
-          //   storeFields: ['docType', 'filename', 'date', 'title', 'content', 'keywords'] // fields to return with search results
-          // });
-          // documentsMiniSearch.addAll(this.documents);
-          // console.log(now() + " refreshData - documents end: " + this.documents.length);
-
-          // fragmentsMiniSearch = new MiniSearch({
-          //   fields: ['heading', 'text'], // fields to index for full-text search
-          //   storeFields: ['docId', 'docType', 'date', 'lineNumber', 'headingLevel', 'counters', 'type', 'heading', 'text', 'keywords'] // fields to return with search results
-          // });
-          // // Index all fragments
-          // console.log(now() + " refreshData - index start: " + this.fragments.length);
-          // fragmentsMiniSearch.addAll(this.fragments);
-          // console.log(now() + " refreshData - index end: " + this.fragments.length);
-
-          await this.applyFilter();
-
-          // Word frequency - from search.brave.com
-          // const importantWords = [];
-          // for (const [term, fieldMap] of fragmentsMiniSearch._index) {
-          //   let totalFreq = 0;
-          //   for (const [field, docMap] of fieldMap) {
-          //     for (const [docId, freq] of docMap) {
-          //       totalFreq += freq;
-          //     }
-          //   }
-          //   importantWords.push({ term, frequency: totalFreq });
-          // }
-          // // Sort by frequency
-          // importantWords.sort((a, b) => b.frequency - a.frequency);
-          // console.log(now() + " refreshData - importantWords: " + JSON.stringify(importantWords, null, 2));
-
-          // // // Search with default options
-          // // let results = fragmentsMiniSearch.search('youtube angels');
-          // let results = fragmentsMiniSearch.search(MiniSearch.wildcard);
-          // // // let results = fragmentsMiniSearch.search(MiniSearch.wildcard, {
-          // // //   filter: (result) => result.type === 'heading'
-          // // // });
-          // // // Does not work let results = fragmentsMiniSearch.search(MiniSearch.wildcard).map(result => result.storeFields);
-          // this.filteredFragments = results.map(q => ({ type: 'qa', date: q.date, title: q.heading, text: q.text, id: q.id, score: q.score, docId: q.docId, lineNumber: q.lineNumber, headingLevel: q.headingLevel, counters: q.counters, terms: q.terms, queryTerms: q.queryTerms, match: q.match }));
-          // // console.log(now() + " refreshData - search results: " + JSON.stringify(results[0], null, 2));
-          //
-          // // Notes
-          // // miniSearch.search({ combineWith: 'OR', queries: ['apple', 'pear'] }) // Returns documents with "apple" OR "pear"
-          // // miniSearch.search({ combineWith: 'AND', queries: [ 'zen', { combineWith: 'OR', queries: ['motorcycle', 'archery'] } ] }) // Returns documents with "zen" AND ("motorcycle" OR "archery")
-          // // miniSearch.search('zen', { fields: ['title'] })    // Search specific field(s)
-          // // miniSearch.search('zen', { boost: { title: 2 } })  // Boost title field
-          // // miniSearch.search('moto', { prefix: true })        // Prefix search (so that 'moto' will match 'motorcycle')
-          // // miniSearch.search('ismael', { fuzzy: 0.2 })        // Fuzzy search, in this example, with a max edit distance of 0.2 * term length.
+          // await this.applyFilter();
 
         },
-
-
-        // 10:01:15 syncIt - processing - result: {
-        //   "id": 947292,
-        //   "name": "tickeris.eth",
-        //   "token_id": "32013347301325421126858387838396360801827778729161237248205053585978029050937",
-        //   "version": 1,
-        //   "token_contract": null,
-        //   "owner": "0xa2113f1e9a66c3b0a75bb466bbbfeeec987ac92e",
-        //   "expiry_date": "2029-11-28T01:27:11.000Z",
-        //   "registration_status": "registered",
-        //   "grace_ends_at": "2030-02-26T01:27:11.000Z",
-        //   "premium_ends_at": "2030-03-19T01:27:11.000Z",
-        //   "registration_date": "2024-11-28T01:27:11.000Z",
-        //   "creation_date": "2024-11-28T01:27:11.000Z",
-        //   "last_sale_date": null,
-        //   "last_sale_price": null,
-        //   "last_sale_currency": null,
-        //   "last_sale_price_usd": null,
-        //   "metadata": {
-        //     "avatar": "https://euc.li/tickeris.eth"
-        //   },
-        //   "metadata_updated_at": "2025-11-17T06:04:50.286Z",
-        //   "clubs": null,
-        //   "club_ranks": null,
-        //   "has_numbers": false,
-        //   "has_emoji": false,
-        //   "listings": [],
-        //   "upvotes": 0,
-        //   "downvotes": 0,
-        //   "net_score": 0,
-        //   "watchers_count": 0,
-        //   "is_user_watching": false,
-        //   "watchlist_record_id": null,
-        //   "highest_offer_wei": null,
-        //   "highest_offer_currency": "0x0000000000000000000000000000000000000000",
-        //   "highest_offer_id": null,
-        //   "view_count": 0,
-        //   "compromised": null
-        // }
 
         async syncIt() {
           const PAGESIZE = 100;
@@ -1582,276 +964,32 @@
           this.names = await this.db.names.toArray();
         },
 
-        async checkForUpdates() { // TODO: Delete
-          const meta = await this.db.metadata.get('lastCommit');
-          console.log(now() + " checkForUpdates - previous sha: " + (meta && meta.sha || "(none)") + ", timestamp: " + (meta && meta.timestamp && (meta.timestamp + " " + formatLocalTime(meta.timestamp)) || "(none)"));
-          this.sync.info = "Getting latest information";
-          this.sync.total = null;
-          const latestCommit = await this.getLatestCommit();
-          this.sync.completed = 1;
-          console.log(now() + " checkForUpdates - latest   sha: " + (latestCommit && latestCommit.sha || "(none)") + ", timestamp: " + (latestCommit && latestCommit.timestamp && (latestCommit.timestamp + " " + formatLocalTime(latestCommit.timestamp)) || "(none)"));
-          const testing = true;
-          if (!meta || meta.sha !== latestCommit.sha || testing) {
-            console.log(now() + " checkForUpdates - New content detected – re-indexing...");
-            await this.loadAllFiles();
-            await this.db.metadata.put({ key: 'lastCommit', sha: latestCommit.sha, timestamp: latestCommit.timestamp });
-          } else {
-            console.log(now() + " checkForUpdates - Already up to date");
-          }
-          this.sync.info = null;
-        },
+        // async performKeywordSearch() { // TODO: To use with nameFilter
+        //   clearTimeout(this.filterTimerId);
+        //   this.filterTimerId = setTimeout(async () => {
+        //     await this.applyFilter();
+        //   }, 750);
+        // },
 
-        markTitle(item) { // TODO: Delete
-          const matchingKeywords = Object.keys(item.raw.match).filter(key => item.raw.match[key].includes("heading"));
-          const safeText = item.raw.title.replace(/<script/gi, '&lt;script');
-          const innerHTML = marked.parse(safeText);
-          if (this.settings.searchType == "advanced") {
-            if (matchingKeywords.length > 0) {
-              const regex = new RegExp(`(${matchingKeywords.join('|')})`, 'gi');
-              return innerHTML.replace(regex, '<mark>$1</mark>');
-            }
-          } else {
-            if (this.settings.filter) {
-              const regex = new RegExp(`(${this.settings.filter})`, 'gi');
-              return innerHTML.replace(regex, '<mark>$1</mark>');
-            }
-          }
-          return innerHTML;
-        },
-
-        markText(item) { // TODO: Delete
-          marked.setOptions({
-            highlight: function(code, lang) {
-              if (lang && hljs.getLanguage(lang)) {
-                return hljs.highlight(code, {language: lang, ignoreIllegals: true }).value;
-              }
-              return hljs.highlightAuto(code).value;
-            }
-          });
-          const safeText = item.raw.text.replace(/<script/gi, '&lt;script');
-          const innerHTML = marked.parse(safeText);
-          const matchingKeywords = Object.keys(item.raw.match).filter(key => item.raw.match[key].includes("text"));
-          if (this.settings.searchType == "advanced") {
-            if (matchingKeywords.length > 0) {
-              const regex = new RegExp(`(${matchingKeywords.join('|')})`, 'gi');
-              return innerHTML.replace(regex, '<mark>$1</mark>');
-            }
-          } else {
-            if (this.settings.filter) {
-              const regex = new RegExp(`(${this.settings.filter})`, 'gi');
-              return innerHTML.replace(regex, '<mark>$1</mark>');
-            }
-          }
-          return innerHTML;
-        },
-
-        getSlug(title) { // TODO: Delete
-          console.log(now() + " getSlug - title: " + title);
-          const options = {
-          	// prefix: "my-prefix-",
-          };
-          const { gfmHeadingId } = window.markedGfmHeadingId;
-          marked.use(gfmHeadingId(options));
-          const test = marked.parse("# " + title);
-          // console.log(now() + " getSlug - test: " + test);
-          const match = test.match(/"([^"]*)"/);
-          const result = match ? match[1] : '';
-          // console.log(now() + " getSlug - result: " + result);
-          return result;
-        },
-
-        async viewDocument(doc) { // TODO: Delete
-          this.viewerTitle = doc.title;
-          // Sanitize before parsing
-          const safeContent = doc.content.replace(/<script/gi, '&lt;script');
-          const options = {
-          	// prefix: "my-prefix-",
-          };
-          const { gfmHeadingId } = window.markedGfmHeadingId;
-
-
-          // const slugger = new GithubSlugger();
-          // const slug = slugger.slug('My Heading Text');
-          // console.log(slug);
-
-          // const text = "Hello World!";
-          // const id = gfmHeadingId.slug(text);
-          // console.log(now() + " viewDocument - id: " + id);
-
-          marked.use(gfmHeadingId(options));
-
-          const test = marked.parse("### The quick brown");
-          console.log(now() + " viewDocument - test: " + test);
-
-          const match = test.match(/"([^"]*)"/);
-          const result = match ? match[1] : '';
-          console.log(now() + " viewDocument - result: " + result);
-
-
-          this.viewerHtml = marked.parse(safeContent);
-          this.viewerDialog = true;
-          await Vue.nextTick();
-          // await this.scrollToHash("#httpsyoutubeiq0xjcj1srw-nat-king-cole-nature-boy-am-i-a-nature-boy");
-          // External links in new tab
-          // document.querySelectorAll('#modal-body a[href^="http"]').forEach(a => {
-          //   a.target = '_blank';
-          //   a.rel = 'noopener noreferrer';
-          // });
-
-          // // Inside your Vue component (e.g., using <script setup>)
-          document.querySelectorAll('#modal-body a').forEach(a => {
-            const href = a.getAttribute('href');
-            // console.log(now() + " viewDocument - a: " + JSON.stringify(a) + ", href: " + JSON.stringify(href));
-
-            if (href) {
-              if (href.startsWith("http")) {
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-              } else if (!href.startsWith("#")) {
-                a.addEventListener('click', (event) => {
-                  event.preventDefault();
-                  // Execute your Vuetify/Vue function
-                  // console.log(now() + " viewDocument - Custom Vuetify function triggered for:" + href);
-                  // Example: navigate or emit event
-                  // router.push('/some-route') or emit('custom-event', href)
-                });
-              }
-            }
-            if (href && !href.startsWith('http') && !href.startsWith('#')) {
-              a.addEventListener('click', (event) => {
-                event.preventDefault();
-                // Execute your Vuetify/Vue function
-                console.log(now() + " viewDocument - Custom Vuetify function triggered for: " + href);
-                // Example: navigate or emit event
-                // router.push('/some-route') or emit('custom-event', href)
-              });
-            }
-          });
-
-        },
-
-        showFragmentMenuDialog(item) { // TODO: Delete
-          this.fragmentMenuDialog.show = true;
-          this.fragmentMenuDialog.item = item;
-          console.log(now() + " showFragmentMenuDialog - fragmentMenuDialog: '" + JSON.stringify(this.fragmentMenuDialog, null, 2));
-        },
-
-        viewQA(qa) { // TODO: Delete
-          console.log(now() + " viewQA - qa: " + JSON.stringify(qa, null, 2));
-          this.viewerTitle = qa.heading;
-          const safeAnswer = qa.text.replace(/<script/gi, '&lt;script');
-          this.viewerHtml = `<h3>${qa.heading}</h3>\n\n${marked.parse(safeAnswer)}`;
-          this.viewerDialog = true;
-          // External links in new tab
-          // document.querySelectorAll('#modal-body a[href^="http"]').forEach(a => {
-          //   a.target = '_blank';
-          //   a.rel = 'noopener noreferrer';
-          // });
-        },
-        async performKeywordSearch() { // TODO: To use with nameFilter
-          clearTimeout(this.filterTimerId);
-          this.filterTimerId = setTimeout(async () => {
-            await this.applyFilter();
-          }, 750);
-        },
-
-        async applyFilter() { // TODO: To use with nameFilter
-          // console.log(now() + " applyFilter - settings.filter: '" + this.settings.filter + "', fuzzyLevel: " + this.settings.fuzzyLevel);
-          if (this.settings.filter) {
-            this.filteredDocuments = documentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, {
-              fuzzy: this.settings.fuzzyLevel,
-              filter: (result) => { return (result.docType === "readme" && this.settings.search.readme) || (result.docType === "chronicle" && this.settings.search.chronicles) || (result.docType === "other" && this.settings.search.other); },
-            });
-            this.filteredFragments = fragmentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, {
-              fuzzy: this.settings.fuzzyLevel,
-              filter: (result) => { return (result.docType === "readme" && this.settings.search.readme) || (result.docType === "chronicle" && this.settings.search.chronicles) || (result.docType === "other" && this.settings.search.other); },
-            });
-          } else {
-            this.filteredDocuments = null;
-            this.filteredFragments = null;
-          }
-
-          this.documentsCurrentPage = 1; // TODO: Delete
-          this.fragmentsCurrentPage = 1; // TODO: Delete
-          this.saveSettings(); // TODO: May be run on startup
-        },
-
-        async viewSearchItem(item) { // TODO: Delete
-          if (item.type === 'document') {
-            this.db.documents.get(item.id).then(doc => this.viewDocument(doc))
-          } else {
-            // this.db.qas.get(item.id).then(qa => this.viewQA(qa))
-            this.db.fragments.get(item.id).then(fragment => this.viewQA(fragment))
-          }
-        },
-
-        async scrollToHash(hash) { // TODO: Delete
-          console.log(now() + " scrollToHash hash: " + hash);
-          await Vue.nextTick();
-
-          const el = document.querySelector(hash);
-          if (el) {
-            el.scrollIntoView({
-              behavior: 'smooth',
-              block:    'start'     // or 'center', 'nearest'
-            });
-          }
-        },
-
-        handleDeepLink() { // TODO: Delete
-          const hash = window.location.hash;
-          if (!hash || hash === '#') return;
-
-          // Pattern 1: Search query  →  #?q=illusion of separation
-          if (hash.startsWith('#?q=')) {
-            const query = decodeURIComponent(hash.substring(4));
-            this.settings.filter = query.trim();
-            this.settings.tab = "documents";
-            this.performKeywordSearch();
-            return;
-          }
-
-          // Pattern 2: Direct document + optional anchor  →  #filename.md#heading-id
-          const parts = hash.substring(1).split('#');
-          if (parts.length >= 1) {
-            let filename = parts[0].trim();
-            // flexible matching (with or without .md extension)
-            if (!filename.endsWith('.md')) filename += '.md';
-            const anchor = parts.length >= 2 ? parts[1].trim() : null;
-            this.openDocumentByFilenameAndAnchor(filename, anchor);
-          }
-        },
-
-        openDocumentByFilenameAndAnchor(filename, anchor) { // TODO: Delete
-          // find the synced document
-          const doc = this.documents.find(d => d.filename === filename);
-          if (!doc) {
-            console.warn(`[DeepLink] Document not found: ${filename} (run Sync first)`);
-            return;
-          }
-
-          // reuse existing viewer dialog (already wired up in your template)
-          this.viewerTitle = doc.title || filename;
-          this.viewerHtml = marked.parse(doc.content || '');
-          this.viewerDialog = true;
-
-          // scroll to anchor after Vue + marked rendering finishes
-          this.$nextTick(() => {
-            setTimeout(() => {
-              if (anchor) {
-                const target = document.getElementById(anchor) ||
-                               document.querySelector(`[id="${anchor}"]`);
-                if (target) {
-                  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              } else {
-                // scroll to top of markdown content if no anchor
-                const content = document.querySelector('.v-dialog .markdown-content');
-                if (content) content.scrollTop = 0;
-              }
-            }, 150);
-          });
-        },
+        // async applyFilter() { // TODO: To use with nameFilter
+        //   // console.log(now() + " applyFilter - settings.filter: '" + this.settings.filter + "', fuzzyLevel: " + this.settings.fuzzyLevel);
+        //   if (this.settings.filter) {
+        //     this.filteredDocuments = documentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, {
+        //       fuzzy: this.settings.fuzzyLevel,
+        //       filter: (result) => { return (result.docType === "readme" && this.settings.search.readme) || (result.docType === "chronicle" && this.settings.search.chronicles) || (result.docType === "other" && this.settings.search.other); },
+        //     });
+        //     this.filteredFragments = fragmentsMiniSearch.search(this.settings.filter || MiniSearch.wildcard, {
+        //       fuzzy: this.settings.fuzzyLevel,
+        //       filter: (result) => { return (result.docType === "readme" && this.settings.search.readme) || (result.docType === "chronicle" && this.settings.search.chronicles) || (result.docType === "other" && this.settings.search.other); },
+        //     });
+        //   } else {
+        //     this.filteredDocuments = null;
+        //     this.filteredFragments = null;
+        //   }
+        //   this.documentsCurrentPage = 1; // TODO: Delete
+        //   this.fragmentsCurrentPage = 1; // TODO: Delete
+        //   this.saveSettings(); // TODO: May be run on startup
+        // },
 
         saveSettings() {
           // console.log(now() + " saveSettings: " + JSON.stringify(this.settings, null, 2));
@@ -1866,27 +1004,19 @@
             // console.log(now() + " mounted - this.settings: " + JSON.stringify(this.settings, null, 2));
           }
         }
-        Vuetify.useHotkey('cmd+k', async () => { // TODO: Delete
-          // console.log(now() + " mounted - Vuetify.useHotkey cmd+k => search dialog");
-          this.settings.searchDialog = !this.settings.searchDialog;
-          this.saveSettings();
-        });
-        Vuetify.useHotkey('ctrl+k', async () => { // TODO: Delete
-          // console.log(now() + " mounted - Vuetify.useHotkey ctrl+k => search dialog");
-          this.settings.searchDialog = !this.settings.searchDialog;
-          this.saveSettings();
-        });
+        // Vuetify.useHotkey('cmd+k', async () => { // TODO: Delete
+        //   // console.log(now() + " mounted - Vuetify.useHotkey cmd+k => search dialog");
+        //   this.settings.searchDialog = !this.settings.searchDialog;
+        //   this.saveSettings();
+        // });
+        // Vuetify.useHotkey('ctrl+k', async () => { // TODO: Delete
+        //   // console.log(now() + " mounted - Vuetify.useHotkey ctrl+k => search dialog");
+        //   this.settings.searchDialog = !this.settings.searchDialog;
+        //   this.saveSettings();
+        // });
         await this.initDB()
-        // Create metadata if missing
-        // const meta = await this.db.metadata.get('lastUpdated')
-        // if (!meta) await this.db.metadata.put({ key: 'lastUpdated', value: Date.now() })
-        // await this.loadAllFiles()
         await this.refreshData();
         this.initialised = true;
-
-        // === DEEP LINK SUPPORT (minimal addition) ===
-        this.handleDeepLink(); // TODO: Delete
-        window.addEventListener('hashchange', this.handleDeepLink.bind(this)); // TODO: Delete
       }
     })
 

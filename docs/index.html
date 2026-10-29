@@ -1455,6 +1455,7 @@
             }
           }
           this.sync.info = null;
+          this.names = await this.db.names.toArray();
         },
 
         async checkForUpdates() { // TODO: Delete

@@ -657,9 +657,10 @@
           const terms = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
           const currentTime = moment();
           const results = [];
-          for (const term of terms) {
+          console.log(now() + " filteredSortedSummary - this.terms: " + JSON.stringify(this.terms, null, 2));
+          for (const term of this.terms) {
             const endDate = currentTime.clone().add(term[0], term[1]);
-            results.push({ term: term[0] + term[1], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()), names: {} });
+            results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
           }
           // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           for (const name of this.names) {
@@ -882,12 +883,12 @@
 
 
         async refreshData() {
-          const termsInfo = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
+          const termsInfo = [[1, "d", "1d"], [2, "d", "2d"], [3, "d", "3d"], [1, "w", "1w"], [2, "w", "2w"], [1, "M", "1m"], [2, "M", "2m"], [3, "M", "3m"], [6, "M", "6m"], [1, "y", "1y"], [2, "y", "2y"], [3, "y", "3y"], [5, "y", "5y"], [10, "y", "10y"], [1000, "y", ">10y"]];
           const currentTime = moment();
           const terms = [];
           for (const termInfo of termsInfo) {
             const endDate = currentTime.clone().add(termInfo[0], termInfo[1]);
-            terms.push({ term: termInfo[0] + termInfo[1], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
+            terms.push({ term: termInfo[2], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
           }
           // console.log(now() + " refreshData - terms: " + JSON.stringify(terms.slice(0, 2), null, 2));
           console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));

@@ -116,6 +116,7 @@
 
           <v-toolbar flat color="grey-lighten-4" density="compact" class="ma-0 mt-1" style="position: sticky; top: 50px; z-index: 10; width: 100%;">
             <v-text-field v-if="settings.tab == 'summary' || settings.tab == 'names'" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 200px" placeholder="name regex"></v-text-field>
+            <v-text-field v-if="settings.tab == 'config'" v-model.trim="settings.accountFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 300px" placeholder="account or name regex"></v-text-field>
             <!-- <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.filter" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable @input="performKeywordSearch" @click:clear="performKeywordSearch" class="ma-1" style="max-width: 300px" placeholder="search terms"></v-text-field> -->
             <!-- <v-btn color="primary" icon density="comfortable" @click="settings.searchDialog = !settings.searchDialog; saveSettings();" v-tooltip="'Cmd+K or Ctrl-K - Search Dialog'">
               <v-icon :icon="settings.searchDialog ? 'mdi-feature-search' : 'mdi-feature-search-outline'" size="x-large"></v-icon>
@@ -144,6 +145,17 @@
               v-model="settings.names.sortOption"
               @update:model-value="saveSettings();"
               :items="namesSortOptions"
+              variant="plain"
+              density="compact"
+              class="mt-4 mr-2"
+              style="max-width: 150px;"
+            >
+            </v-select>
+            <v-select
+              v-if="settings.tab == 'config'"
+              v-model="settings.accounts.sortOption"
+              @update:model-value="saveSettings();"
+              :items="accountsSortOptions"
               variant="plain"
               density="compact"
               class="mt-4 mr-2"
@@ -186,6 +198,17 @@
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
             <!-- SUMMARY TAB -->
             <v-tabs-window-item value="summary" class="ma-1 pa-0">
+
+              <v-data-table
+                :items="filteredSortedSummary"
+                :headers="summaryHeaders"
+                :items-per-page="-1"
+                hide-default-footer
+                class="elevation-1"
+                @click:row="editAccount"
+              >
+              </v-data-table>
+
               <pre>
 {{ JSON.stringify(filteredSortedSummary, null, 2) }}
               </pre>
@@ -619,6 +642,7 @@
       data() {
         return {
           db: null,
+          terms: [],
           names: [],
           documents: [], // TODO: Delete
           fragments: [], // TODO: Delete
@@ -709,8 +733,8 @@
           accountsSortOptions: [
             { value: "accountasc", title: "▲ Account" },
             { value: "accountdsc", title: "▼ Account" },
-            { value: "scoredsc", title: "▼ Score" },
-            { value: "scoreasc", title: "▲ Score" },
+            { value: "nameasc", title: "▲ Name" },
+            { value: "namedsc", title: "▼ Name" },
           ],
           docsSortOptions: [
             { value: "datedsc", title: "▼ Date" },
@@ -760,14 +784,46 @@
         }
       },
       computed: {
-        filteredSortedSummary() {
-          const results = [];
-          const terms = [[1, "d"], [2, "d"], [3, "d"], [4, "d"], [5, "d"], [6, "d"], [7, "d"], [2, "w"], [3, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [4, "y"], [5, "y"], [10, "y"], [1000, "y"]];
-          const now = moment();
-          for (const term of terms) {
-            const endDate = now.clone().add(term[0], term[1]);
-            results.push([term[0] + term[1], formatLocalTime(endDate.unix())]);
+        allAccounts() {
+          const results = {};
+          for (const item of this.names) {
+            results[item.account] = (results[item.account] || 0) + 1;
           }
+          return results;
+        },
+        summaryHeaders() {
+          const results = [];
+          results.push({ title: "Term", key: "term", sortable: false });
+          for (const [account, count] of Object.entries(this.allAccounts)) {
+            results.push({ title: account, key: account, sortable: false });
+          }
+          return results;
+        },
+
+        filteredSortedSummary() {
+          const terms = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
+          const currentTime = moment();
+          const results = [];
+          for (const term of terms) {
+            const endDate = currentTime.clone().add(term[0], term[1]);
+            results.push({ term: term[0] + term[1], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()), names: {} });
+          }
+          // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
+          for (const name of this.names) {
+            // console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
+            for (let i = 0; i < results.length; i++) {
+              // console.log(now() + " filteredSortedSummary - results[" + i + "]: " + JSON.stringify(results[i], null, 2));
+              if (results[i].endDate > name.expiryDate) {
+                if (!(name.account in results[i].names)) {
+                  results[i].names[name.account] = [];
+                }
+                // results[i].names[name.account].push(name);
+                results[i].names[name.account].push({ name: name.name, expiryDate: name.expiryDate });
+                break;
+              }
+            }
+          }
+          // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results, null, 2));
           return results;
         },
 
@@ -854,9 +910,52 @@
         },
 
         filteredSortedAccounts() {
+          let regex = null;
+          if (this.settings.accountFilter != null && this.settings.accountFilter.length > 0) {
+            try {
+              regex = new RegExp(this.settings.accountFilter, 'i');
+            } catch (e) {
+              console.log("filteredSortedAccounts - regex error: " + e.message);
+              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
+            }
+          }
           let results = [];
           for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
-            results.push({ account, name: accountData.name, enabled: accountData.enabled });
+            let include = true;
+            if (include && regex) {
+              if (!(regex.test(account)) && !(regex.test(accountData.name))) {
+                include = false;
+              }
+            }
+            if (include) {
+              results.push({ account, name: accountData.name, enabled: accountData.enabled });
+            }
+          }
+
+          if (this.settings.accounts.sortOption == "accountasc") {
+            results.sort((a, b) => {
+              return ('' + a.account).localeCompare(b.account);
+            });
+          } if (this.settings.accounts.sortOption == "accountdsc") {
+            results.sort((a, b) => {
+              return ('' + b.account).localeCompare(a.account);
+            });
+          } else if (this.settings.accounts.sortOption == "nameasc") {
+            results.sort((a, b) => {
+              if (('' + a.name).localeCompare(b.name) == 0) {
+                return ('' + a.account).localeCompare(b.account);
+              } else {
+                return ('' + a.name).localeCompare(b.name);
+              }
+            });
+          } if (this.settings.accounts.sortOption == "namedsc") {
+            results.sort((a, b) => {
+              if (('' + a.name).localeCompare(b.name) == 0) {
+                return ('' + a.account).localeCompare(b.account);
+              } else {
+                return ('' + b.name).localeCompare(a.name);
+              }
+            });
           }
           return results;
         },
@@ -1297,6 +1396,18 @@
         },
 
         async refreshData() {
+
+          const termsInfo = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
+          const currentTime = moment();
+          const terms = [];
+          for (const termInfo of termsInfo) {
+            const endDate = currentTime.clone().add(termInfo[0], termInfo[1]);
+            terms.push({ term: termInfo[0] + termInfo[1], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
+          }
+          // console.log(now() + " refreshData - terms: " + JSON.stringify(terms.slice(0, 2), null, 2));
+          console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));
+          this.terms = terms;
+
           this.names = await this.db.names.toArray();
           // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
 

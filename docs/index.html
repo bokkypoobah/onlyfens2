@@ -635,8 +635,9 @@
         summaryHeaders() {
           const results = [];
           results.push({ title: "Term", key: "term", sortable: false });
+          let index = 0;
           for (const account of this.sortedFilteredViewAccounts) {
-            results.push({ title: account.name + " " + account.account.slice(0, 10), key: account.account, sortable: false });
+            results.push({ title: index + " " + account.name + " " + account.account.slice(0, 10), key: index++, sortable: false });
           }
           return results;
         },

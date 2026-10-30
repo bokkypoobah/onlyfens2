@@ -21,6 +21,7 @@
   <link rel="manifest" href="/images/site.webmanifest" />
 
   <link href="css/vuetify_3.9.5.min.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
   <link href="css/materialdesignicons_7.4.47.min.css" rel="stylesheet">
   <link href="fonts/materialdesignicons-webfont.woff2" rel="stylesheet">
   <script src="js/vue_3.5.29.prod.js"></script>
@@ -647,10 +648,10 @@
 
         summaryHeaders() {
           const results = [];
-          results.push({ title: "Term", key: "term", sortable: false });
+          results.push({ title: "Term", key: "term", sortable: false, width: "5%" });
           let index = 0;
           for (const account of this.sortedFilteredViewAccounts) {
-            results.push({ title: account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false });
+            results.push({ title: account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false, width: "50%" });
           }
           return results;
         },
@@ -660,7 +661,7 @@
           console.log(now() + " filteredSortedSummary - sortedFilteredViewAccountsIndex: " + JSON.stringify(this.sortedFilteredViewAccountsIndex, null, 2));
 
           const collator = {};
-          for (const name of this.names) {
+          for (const name of this.sortedFilteredNames) {
             const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
             const accountIndex = this.sortedFilteredViewAccountsIndex[name.account];
             if (accountIndex != null) {

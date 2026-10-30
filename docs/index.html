@@ -182,7 +182,6 @@
           <v-tabs-window v-if="Object.keys(documents).length > 0 || true" v-model="settings.tab" class="ma-1 mt-3 pa-0">
             <!-- SUMMARY TAB -->
             <v-tabs-window-item value="summary" class="ma-1 pa-0">
-
               <v-data-table
                 :items="filteredSortedSummary"
                 :headers="summaryHeaders"
@@ -191,11 +190,22 @@
                 class="elevation-1"
                 @click:row="editAccount"
               >
+                <template v-slot:item="{ item }">
+                  <!-- <tr class="text-no-wrap"> -->
+                  <tr>
+                    <td>{{ item.term }}</td>
+                    <td v-for="(account, index) of sortedFilteredViewAccounts">
+                      <!-- {{ item.term + " " + account.name + " " + index + " " + JSON.stringify(item["key" + index].length) }} -->
+                      {{ item["key" + index].length }}: {{ item["key" + index].map(e => e.name).join(", ") }}
+                    </td>
+                  </tr>
+                  <!-- {{ item }} -->
+                </template>
               </v-data-table>
 
-              <pre>
+              <!-- <pre>
 {{ JSON.stringify(filteredSortedSummary, null, 2) }}
-              </pre>
+              </pre> -->
             </v-tabs-window-item>
 
             <!-- NAMES TAB -->
@@ -637,7 +647,7 @@
           results.push({ title: "Term", key: "term", sortable: false });
           let index = 0;
           for (const account of this.sortedFilteredViewAccounts) {
-            results.push({ title: index + " " + account.name + " " + account.account.slice(0, 10), key: index++, sortable: false });
+            results.push({ title: index + " " + account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false });
           }
           return results;
         },
@@ -663,9 +673,14 @@
           console.log(now() + " filteredSortedSummary - collator: " + JSON.stringify(collator, null, 2));
 
           const results = [];
-          for (const term of this.terms) {
+          for (const [termIndex, term] of this.terms.entries()) {
             // results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
-            results.push({ term: term.term });
+            const record = { term: term.term };
+            for (let accountIndex = 0; accountIndex < this.sortedFilteredViewAccounts.length; accountIndex++) {
+              record["key" + accountIndex] = collator[termIndex] && collator[termIndex][accountIndex] || [];
+            }
+            results.push(record);
+            // results.push({ term: term.term, "key0": "0" });
           }
 
           // // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));

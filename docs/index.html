@@ -619,6 +619,7 @@
         }
       },
       computed: {
+
         allAccounts() {
           const results = {};
           for (const item of this.names) {
@@ -644,7 +645,6 @@
             const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
             console.log(now() + " filteredSortedSummary - termIndex: " + termIndex);
           }
-
 
           const results = [];
           for (const term of this.terms) {
@@ -815,6 +815,7 @@
           // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
+
       },
       methods: {
 
@@ -840,7 +841,6 @@
         },
 
         newAccount() {
-          console.log(now() + " newAccount");
           this.accountDialog.new = true;
           this.accountDialog.account = null;
           this.accountDialog.name = null;
@@ -849,7 +849,6 @@
           this.accountDialog.show = true;
         },
         editAccount(event, { item }) {
-          console.log(now() + " editAccount - event: " + JSON.stringify(event) + ", item: " + JSON.stringify(item));
           this.accountDialog.new = false;
           this.accountDialog.account = item.account;
           this.accountDialog.name = item.name;
@@ -858,33 +857,27 @@
           this.accountDialog.show = true;
         },
         addOrUpdateAccount() {
-          // console.log(now() + " addOrUpdateAccount");
           this.settings.accounts.data[this.accountDialog.account] = {
             name: this.accountDialog.name,
             sync: this.accountDialog.sync,
             view: this.accountDialog.view,
           }
-          console.log(now() + " addOrUpdateAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
           this.accountDialog.show = false;
           this.saveSettings();
         },
         toggleAccountSync(event) {
-          // console.log(now() + " toggleAccountSync - event: " + JSON.stringify(event, null, 2));
           this.settings.accounts.data[event.account].sync = !this.settings.accounts.data[event.account].sync;
           this.saveSettings();
         },
         toggleAccountView(event) {
-          // console.log(now() + " toggleAccountView - event: " + JSON.stringify(event, null, 2));
           this.settings.accounts.data[event.account].view = !this.settings.accounts.data[event.account].view;
           this.saveSettings();
         },
         deleteAccount() {
-          console.log(now() + " deleteAccount - accountDialog.account: " + this.accountDialog.account);
           delete this.settings.accounts.data[this.accountDialog.account];
           this.accountDialog.show = false;
           this.saveSettings();
         },
-
 
         async refreshData() {
           const termsInfo = [[1, "d", "1d"], [2, "d", "2d"], [3, "d", "3d"], [1, "w", "1w"], [2, "w", "2w"], [1, "M", "1m"], [2, "M", "2m"], [3, "M", "3m"], [6, "M", "6m"], [1, "y", "1y"], [2, "y", "2y"], [3, "y", "3y"], [5, "y", "5y"], [10, "y", "10y"], [1000000, "y", ">10y"]];
@@ -894,8 +887,6 @@
             const endDate = currentTime.clone().add(termInfo[0], termInfo[1]);
             terms.push({ term: termInfo[2], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
           }
-          // console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));
-
           const rawNames = await this.db.names.toArray();
           const names = [];
           for (const name of rawNames) {
@@ -917,10 +908,7 @@
           }
           this.terms = terms;
           this.names = names;
-          // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
-
           // await this.applyFilter();
-
         },
 
         async syncIt() {
@@ -930,57 +918,53 @@
           this.sync.info = "Syncing";
           this.sync.total = null;
           this.sync.completed = 0;
-          for (const [accountString, accountData] of Object.entries(this.settings.accounts.data)) {
-            if (accountData.sync) {
-              const account = ethers.utils.getAddress(accountString);
-              console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
-              this.sync.info = "Syncing " + account + " " + accountData.name;
-              let names = [];
-              let done = false;
-              let page = 1;
-              do {
-                const url = "https://api.grails.app/api/v1/search?limit=" + PAGESIZE + "&page=" + page + "&filters[owner]=" + account + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
-                console.log(now() + " syncIt - processing - url: " + url);
-                const response = await fetch(url).then(response => response.json());
-                if (response.success) {
-                  for (const result of response.data.results) {
-                    console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
-                    const name = {
-                      account,
-                      tokenId: result.token_id,
-                      externalId: result.id,
-                      name: result.name,
-                      owner: ethers.utils.getAddress(result.owner),
-                      expiryDate: moment(result.expiry_date).unix(),
-                      registrationStatus: result.registration_status,
-                      graceEndsAt: moment(result.grace_ends_at).unix(),
-                      premiumEndsAt: moment(result.premium_ends_at).unix(),
-                      registrationDate: moment(result.registration_date).unix(),
-                      creationDate: moment(result.creation_date).unix(),
-                      retrievedAt,
-                    };
-                    console.log(now() + " syncIt - processing - name: " + JSON.stringify(name, null, 2));
-                    names.push(name);
-                  }
-                  console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
-                  this.sync.completed += response.data.results.length;
+          for (const account of this.sortedAccounts.filter(e => e.sync )) {
+            console.log(now() + " syncIt - account: " + JSON.stringify(account));
+            const address = ethers.utils.getAddress(account.account);
+            console.log(now() + " syncIt - processing: " + account.account + " " + account.name);
+            this.sync.info = "Syncing " + account.account + " " + account.name;
+            let names = [];
+            let done = false;
+            let page = 1;
+            do {
+              const url = "https://api.grails.app/api/v1/search?limit=" + PAGESIZE + "&page=" + page + "&filters[owner]=" + address + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
+              console.log(now() + " syncIt - processing - url: " + url);
+              const response = await fetch(url).then(response => response.json());
+              if (response.success) {
+                for (const result of response.data.results) {
+                  console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
+                  const name = {
+                    account: address,
+                    tokenId: result.token_id,
+                    externalId: result.id,
+                    name: result.name,
+                    owner: ethers.utils.getAddress(result.owner),
+                    expiryDate: moment(result.expiry_date).unix(),
+                    registrationStatus: result.registration_status,
+                    graceEndsAt: moment(result.grace_ends_at).unix(),
+                    premiumEndsAt: moment(result.premium_ends_at).unix(),
+                    registrationDate: moment(result.registration_date).unix(),
+                    creationDate: moment(result.creation_date).unix(),
+                    retrievedAt,
+                  };
+                  console.log(now() + " syncIt - processing - name: " + JSON.stringify(name, null, 2));
+                  names.push(name);
                 }
-                done = !response || !response.success || !response.data.pagination.hasNext;
-                // done = true; // TODO: Testing
-                if (!done) {
-                  page++;
-                  await delay(2000);
-                }
-              } while (!done);
-              console.log(now() + " syncIt - processing - names: " + JSON.stringify(names, null, 2));
-
-              const deleteCall = await this.db.names.where("[account+tokenId]").between([account, Dexie.minKey], [account, Dexie.maxKey]).delete();
-              console.log(now() + " syncIt - processing - deleteCall: " + JSON.stringify(deleteCall, null, 2));
-
-              const bulkAddCall = await this.db.names.bulkAdd(names);
-              console.log(now() + " syncIt - processing - bulkAddCall: " + JSON.stringify(bulkAddCall, null, 2));
-
-            }
+                console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
+                this.sync.completed += response.data.results.length;
+              }
+              done = !response || !response.success || !response.data.pagination.hasNext;
+              // done = true; // TODO: Testing
+              if (!done) {
+                page++;
+                await delay(2000);
+              }
+            } while (!done);
+            console.log(now() + " syncIt - processing - names: " + JSON.stringify(names, null, 2));
+            const deleteCall = await this.db.names.where("[account+tokenId]").between([account.account, Dexie.minKey], [account.account, Dexie.maxKey]).delete();
+            console.log(now() + " syncIt - processing - deleteCall: " + JSON.stringify(deleteCall, null, 2));
+            const bulkAddCall = await this.db.names.bulkAdd(names);
+            console.log(now() + " syncIt - processing - bulkAddCall: " + JSON.stringify(bulkAddCall, null, 2));
           }
           this.sync.info = null;
           await this.refreshData();

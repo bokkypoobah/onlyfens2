@@ -637,14 +637,18 @@
         },
 
         filteredSortedSummary() {
-          console.log(now() + " filteredSortedSummary - this.terms[0..1]: " + JSON.stringify(this.terms.slice(0, 2), null, 2));
-
           const collator = {};
-          for (const name of this.names.slice(0, 5)) {
-            console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
+          for (const name of this.names.slice(0, 10)) {
             const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
-            console.log(now() + " filteredSortedSummary - termIndex: " + termIndex);
+            if (!(termIndex in collator)) {
+              collator[termIndex] = {};
+            }
+            if (!(name.account in collator[termIndex])) {
+              collator[termIndex][name.account] = [];
+            }
+            collator[termIndex][name.account].push(name);
           }
+          console.log(now() + " filteredSortedSummary - collator: " + JSON.stringify(collator, null, 2));
 
           const results = [];
           for (const term of this.terms) {
@@ -652,7 +656,7 @@
           }
 
           // // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          // for (const name of this.names) {
+          for (const name of this.names) {
           //   // console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
           //   for (let i = 0; i < results.length; i++) {
           //     // console.log(now() + " filteredSortedSummary - results[" + i + "]: " + JSON.stringify(results[i], null, 2));
@@ -665,8 +669,7 @@
           //       break;
           //     }
           //   }
-          // }
-
+          }
           // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results, null, 2));
           return results;
         },

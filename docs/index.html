@@ -82,42 +82,42 @@
         <v-tabs v-model="settings.tab" @update:model-value="saveSettings();" color="primary">
           <v-tab value="summary" class="text-none"><v-icon icon="mdi-sigma" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Summary" : "Summary" }}</v-tab>
           <v-tab value="names" class="text-none"><v-icon icon="mdi-alphabetical" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "ENS Names" : "Names" }}</v-tab>
-          <v-tab value="config" class="text-none"><v-icon icon="mdi-cog-outline" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Configuration" : "Config" }}</v-tab>
+          <v-tab value="accounts" class="text-none"><v-icon icon="mdi-bank" class="mr-2"></v-icon>{{ $vuetify.display.mdAndUp ? "Accounts" : "Accounts" }}</v-tab>
         </v-tabs>
       </v-app-bar>
 
       <v-main>
         <v-container fluid class="ma-0 pa-0">
 
-          <!-- <v-alert
-            v-if="initialised && Object.keys(documents).length == 0 && false"
+          <v-alert
+            v-if="Object.keys(settings.accounts.data).length == 0"
             closable
             title="Info"
-            text="Click on the Sync button above to retrieve the text files for search / display in this app"
+            text="Enter your list of Ethereum accounts in the Accounts tab, then click on the Sync to retrieve your ENS names"
             type="info"
             color="info"
-            class="mx-0 my-1"
+            class="mx-1 my-1"
           >
-          </v-alert> -->
+          </v-alert>
 
           <v-toolbar flat color="grey-lighten-4" density="compact" class="ma-0 mt-1" style="position: sticky; top: 50px; z-index: 10; width: 100%;">
             <v-text-field v-if="settings.tab == 'summary' || settings.tab == 'names'" v-model.trim="settings.nameFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 200px" placeholder="name regex"></v-text-field>
-            <v-text-field v-if="settings.tab == 'config'" v-model.trim="settings.accountFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 300px" placeholder="account or name regex"></v-text-field>
+            <v-text-field v-if="settings.tab == 'accounts'" v-model.trim="settings.accountFilter" @input="saveSettings" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable class="ma-1 ml-2" style="max-width: 300px" placeholder="account or name regex"></v-text-field>
             <!-- <v-text-field v-if="$vuetify.display.mdAndUp" v-model.trim="settings.filter" hide-details prepend-inner-icon="mdi-magnify" flat density="compact" variant="solo" color="white" clearable @input="performKeywordSearch" @click:clear="performKeywordSearch" class="ma-1" style="max-width: 300px" placeholder="search terms"></v-text-field> -->
             <!-- <v-btn color="primary" icon density="comfortable" @click="settings.searchDialog = !settings.searchDialog; saveSettings();" v-tooltip="'Cmd+K or Ctrl-K - Search Dialog'">
               <v-icon :icon="settings.searchDialog ? 'mdi-feature-search' : 'mdi-feature-search-outline'" size="x-large"></v-icon>
             </v-btn> -->
 
             <v-spacer></v-spacer>
-            <v-btn v-if="settings.tab == 'config'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
+            <v-btn v-if="settings.tab == 'accounts'" color="primary" icon density="comfortable" @click="newAccount();" v-tooltip="'Add new account'">
               <v-icon icon="mdi-plus" size="x-large"></v-icon>
             </v-btn>
             <v-spacer></v-spacer>
             <v-chip v-if="settings.tab == 'names'" color="primary" variant="text" v-tooltip="'#search/#total names'">
               {{ filteredSortedNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
             </v-chip>
-            <v-chip v-if="settings.tab == 'config'" color="primary" variant="text" v-tooltip="'#search/#total accounts'">
-              {{ filteredSortedAccounts.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ Object.keys(settings.accounts.data).length }}</span>
+            <v-chip v-if="settings.tab == 'accounts'" color="primary" variant="text" v-tooltip="'#search/#total accounts'">
+              {{ sortedFilteredAccounts.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ Object.keys(settings.accounts.data).length }}</span>
             </v-chip>
             <v-btn-toggle v-if="settings.tab == 'summary'" v-model="settings.summary.expiryOrGrace" border variant="outlined" divided density="compact">
               <v-btn value="expiry">Expiry</v-btn>
@@ -136,7 +136,7 @@
             >
             </v-select>
             <v-select
-              v-if="settings.tab == 'config'"
+              v-if="settings.tab == 'accounts'"
               v-model="settings.accounts.sortOption"
               @update:model-value="saveSettings();"
               :items="accountsSortOptions"
@@ -159,10 +159,10 @@
             >
             </v-pagination>
             <v-pagination
-              v-if="settings.tab == 'config'"
+              v-if="settings.tab == 'accounts'"
               v-model="accountsCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedAccounts.length / settings.accounts.pageSize)"
+              :length="Math.ceil(sortedFilteredAccounts.length / settings.accounts.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               :show-first-last-page="$vuetify.display.mdAndUp"
@@ -232,16 +232,13 @@
                 <template #item.account="{ item }">
                   <td class="text-center">{{ item.account }}</td>
                 </template>
-                <!-- <template #item.enabled="{ item }">
-                  <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
-                </template> -->
               </v-data-table>
             </v-tabs-window-item>
 
-            <!-- CONFIG TAB -->
-            <v-tabs-window-item value="config" class="ma-1 pa-0">
+            <!-- ACCOUNTS TAB -->
+            <v-tabs-window-item value="accounts" class="ma-1 pa-0">
               <v-data-table
-                :items="filteredSortedPagedAccounts"
+                :items="sortedFilteredPagedAccounts"
                 :headers="accountHeaders"
                 :items-per-page="-1"
                 hide-default-footer
@@ -251,8 +248,11 @@
                 <template #item.number="{ index }">
                   <td class="text-center">{{ (accountsCurrentPage - 1) * settings.accounts.pageSize + index + 1 }}</td>
                 </template>
-                <template #item.enabled="{ item }">
-                  <v-checkbox-btn :model-value="item.enabled" @update:model-value="toggleAccountEnabled(item);" @click.stop hide-details></v-checkbox-btn>
+                <template #item.sync="{ item }">
+                  <v-checkbox-btn :model-value="item.sync" @update:model-value="toggleAccountSync(item);" @click.stop hide-details></v-checkbox-btn>
+                </template>
+                <template #item.view="{ item }">
+                  <v-checkbox-btn :model-value="item.view" @update:model-value="toggleAccountView(item);" @click.stop hide-details></v-checkbox-btn>
                 </template>
               </v-data-table>
             </v-tabs-window-item>
@@ -271,7 +271,7 @@
               style="max-width: 70px;"
             ></v-select>
             <v-select
-              v-if="settings.tab == 'config'"
+              v-if="settings.tab == 'accounts'"
               v-model="settings.accounts.pageSize"
               @update:model-value="saveSettings();"
               :items="pageSizes"
@@ -293,10 +293,10 @@
             >
             </v-pagination>
             <v-pagination
-              v-if="settings.tab == 'config'"
+              v-if="settings.tab == 'accounts'"
               v-model="accountsCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedAccounts.length / settings.accounts.pageSize)"
+              :length="Math.ceil(sortedFilteredAccounts.length / settings.accounts.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               show-first-last-page
@@ -339,7 +339,7 @@
       </v-dialog> -->
 
       <!-- Account Dialog -->
-      <!-- <v-dialog v-model="accountDialog.show" persistent max-width="600">
+      <v-dialog v-model="accountDialog.show" persistent max-width="600">
         <v-card>
           <v-toolbar flat density="compact" class="text-h6">
             <v-toolbar-title>{{ accountDialog.new ? "Add Account" : "Edit Account" }}</v-toolbar-title>
@@ -351,7 +351,8 @@
           <v-card-text>
             <v-text-field :disabled="!accountDialog.new" v-model="accountDialog.account" density="compact" label="account" placeholder="0x1234abcd..." clearable></v-text-field>
             <v-text-field v-model="accountDialog.name" density="compact" label="name" placeholder="account 01" clearable></v-text-field>
-            <v-checkbox-btn v-model="accountDialog.enabled" label="enabled" hide-details v-tooltip="'docs/README.md'"></v-checkbox-btn>
+            <v-checkbox-btn v-model="accountDialog.sync" label="Synchronise data" hide-details v-tooltip="'Retrieve data from grails.app API'"></v-checkbox-btn>
+            <v-checkbox-btn v-model="accountDialog.view" label="View names" hide-details v-tooltip="'Include account in views'"></v-checkbox-btn>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -360,7 +361,7 @@
             <v-btn v-if="!accountDialog.new" color="primary" @click="addOrUpdateAccount">Update</v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog> -->
+      </v-dialog>
 
       <!-- Document / QA Viewer Dialog -->
       <!-- <v-dialog v-model="viewerDialog" scrollable height="90vh">
@@ -525,18 +526,9 @@
           fragmentIdIndex: {}, // TODO: Delete
 
           settings: {
-            tab: "config",
-            searchString: null,
-            searchType: "advanced",
+            tab: "summary",
             nameFilter: null,
             accountFilter: null,
-            filter: null, // TODO: Delete
-            fuzzyLevel: "0", // MiniSearch fuzzy level
-            search: {
-              readme: true,
-              chronicles: true,
-              other: true,
-            },
             summary: {
               expiryOrGrace: "expiry",
               pageSize: 10,
@@ -551,31 +543,20 @@
               pageSize: 10,
               sortOption: "accountasc",
             },
-            documents: { // TODO: Delete
-              pageSize: 10,
-              sortOption: "scoredsc",
-            },
-            fragments: { // TODO: Delete
-              pageSize: 25,
-              sortOption: "scoredsc",
-            },
-            searchDialog: false,
-            version: 3,
+            // searchDialog: false,
+            version: 4,
           },
           initialised: false,
           namesCurrentPage: 1,
           accountsCurrentPage: 1,
-          documentsCurrentPage: 1, // TODO: Delete
-          fragmentsCurrentPage: 1, // TODO: Delete
-          filteredDocuments: null, // TODO: Delete
-          filteredFragments: null, // TODO: Delete
           filterTimerId: null,
           accountDialog: {
             show: false,
             new: false,
             account: null,
             name: null,
-            enabled: true,
+            sync: true,
+            view: true,
           },
           viewerDialog: false,
           viewerTitle: "",
@@ -626,7 +607,8 @@
             { title: "#", key: "number", sortable: false },
             { title: "Account", key: "account", sortable: false },
             { title: "Name", key: "name", sortable: false },
-            { title: "Enabled", key: "enabled", sortable: false }
+            { title: "Sync", key: "sync", sortable: false },
+            { title: "View", key: "view", sortable: false },
           ],
           sync: {
             info: null,
@@ -654,29 +636,37 @@
         },
 
         filteredSortedSummary() {
-          const terms = [[1, "d"], [2, "d"], [3, "d"], [1, "w"], [2, "w"], [1, "M"], [2, "M"], [3, "M"], [6, "M"], [1, "y"], [2, "y"], [3, "y"], [5, "y"], [10, "y"], [1000, "y"]];
-          const currentTime = moment();
+          console.log(now() + " filteredSortedSummary - this.terms[0..1]: " + JSON.stringify(this.terms.slice(0, 2), null, 2));
+
+          const collator = {};
+          for (const name of this.names.slice(0, 5)) {
+            console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
+            const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
+            console.log(now() + " filteredSortedSummary - termIndex: " + termIndex);
+          }
+
+
           const results = [];
-          console.log(now() + " filteredSortedSummary - this.terms: " + JSON.stringify(this.terms, null, 2));
           for (const term of this.terms) {
-            const endDate = currentTime.clone().add(term[0], term[1]);
             results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
           }
-          // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          for (const name of this.names) {
-            // console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
-            for (let i = 0; i < results.length; i++) {
-              // console.log(now() + " filteredSortedSummary - results[" + i + "]: " + JSON.stringify(results[i], null, 2));
-              if (results[i].endDate > name.expiryDate) {
-                if (!(name.account in results[i].names)) {
-                  results[i].names[name.account] = [];
-                }
-                // results[i].names[name.account].push(name);
-                results[i].names[name.account].push({ name: name.name, expiryDate: name.expiryDate });
-                break;
-              }
-            }
-          }
+
+          // // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
+          // for (const name of this.names) {
+          //   // console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
+          //   for (let i = 0; i < results.length; i++) {
+          //     // console.log(now() + " filteredSortedSummary - results[" + i + "]: " + JSON.stringify(results[i], null, 2));
+          //     if (results[i].endDate > name.expiryDate) {
+          //       if (!(name.account in results[i].names)) {
+          //         results[i].names[name.account] = [];
+          //       }
+          //       // results[i].names[name.account].push(name);
+          //       results[i].names[name.account].push({ name: name.name, expiryDate: name.expiryDate });
+          //       break;
+          //     }
+          //   }
+          // }
+
           // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results, null, 2));
           return results;
         },
@@ -763,29 +753,11 @@
           return results;
         },
 
-        filteredSortedAccounts() {
-          let regex = null;
-          if (this.settings.accountFilter != null && this.settings.accountFilter.length > 0) {
-            try {
-              regex = new RegExp(this.settings.accountFilter, 'i');
-            } catch (e) {
-              console.log("filteredSortedAccounts - regex error: " + e.message);
-              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
-            }
-          }
+        sortedAccounts() {
           let results = [];
           for (const [account, accountData] of Object.entries(this.settings.accounts.data)) {
-            let include = true;
-            if (include && regex) {
-              if (!(regex.test(account)) && !(regex.test(accountData.name))) {
-                include = false;
-              }
-            }
-            if (include) {
-              results.push({ account, name: accountData.name, enabled: accountData.enabled });
-            }
+            results.push({ account, name: accountData.name, sync: accountData.sync, view: accountData.view });
           }
-
           if (this.settings.accounts.sortOption == "accountasc") {
             results.sort((a, b) => {
               return ('' + a.account).localeCompare(b.account);
@@ -813,9 +785,33 @@
           }
           return results;
         },
-        filteredSortedPagedAccounts() {
+        sortedFilteredAccounts() {
+          let regex = null;
+          if (this.settings.accountFilter != null && this.settings.accountFilter.length > 0) {
+            try {
+              regex = new RegExp(this.settings.accountFilter, 'i');
+            } catch (e) {
+              console.log("sortedFilteredAccounts - regex error: " + e.message);
+              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
+            }
+          }
+          let results = [];
+          for (const account of this.sortedAccounts) {
+            let include = true;
+            if (include && regex) {
+              if (!(regex.test(account.account)) && !(regex.test(account.name))) {
+                include = false;
+              }
+            }
+            if (include) {
+              results.push(account);
+            }
+          }
+          return results;
+        },
+        sortedFilteredPagedAccounts() {
           const start = (this.accountsCurrentPage - 1) * this.settings.accounts.pageSize;
-          const results = this.filteredSortedAccounts.slice(start, start + this.settings.accounts.pageSize);
+          const results = this.sortedFilteredAccounts.slice(start, start + this.settings.accounts.pageSize);
           // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
@@ -848,7 +844,8 @@
           this.accountDialog.new = true;
           this.accountDialog.account = null;
           this.accountDialog.name = null;
-          this.accountDialog.enabled = true;
+          this.accountDialog.sync = true;
+          this.accountDialog.view = true;
           this.accountDialog.show = true;
         },
         editAccount(event, { item }) {
@@ -856,22 +853,29 @@
           this.accountDialog.new = false;
           this.accountDialog.account = item.account;
           this.accountDialog.name = item.name;
-          this.accountDialog.enabled = item.enabled;
+          this.accountDialog.sync = item.sync;
+          this.accountDialog.view = item.view;
           this.accountDialog.show = true;
         },
         addOrUpdateAccount() {
           // console.log(now() + " addOrUpdateAccount");
           this.settings.accounts.data[this.accountDialog.account] = {
             name: this.accountDialog.name,
-            enabled: this.accountDialog.enabled,
+            sync: this.accountDialog.sync,
+            view: this.accountDialog.view,
           }
           console.log(now() + " addOrUpdateAccount - this.settings.accounts" + JSON.stringify(this.settings.accounts, null, 2));
           this.accountDialog.show = false;
           this.saveSettings();
         },
-        toggleAccountEnabled(event) {
-          console.log(now() + " toggleAccountEnabled - event: " + JSON.stringify(event, null, 2));
-          this.settings.accounts.data[event.account].enabled = !this.settings.accounts.data[event.account].enabled;
+        toggleAccountSync(event) {
+          // console.log(now() + " toggleAccountSync - event: " + JSON.stringify(event, null, 2));
+          this.settings.accounts.data[event.account].sync = !this.settings.accounts.data[event.account].sync;
+          this.saveSettings();
+        },
+        toggleAccountView(event) {
+          // console.log(now() + " toggleAccountView - event: " + JSON.stringify(event, null, 2));
+          this.settings.accounts.data[event.account].view = !this.settings.accounts.data[event.account].view;
           this.saveSettings();
         },
         deleteAccount() {
@@ -890,9 +894,7 @@
             const endDate = currentTime.clone().add(termInfo[0], termInfo[1]);
             terms.push({ term: termInfo[2], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
           }
-          // console.log(now() + " refreshData - terms: " + JSON.stringify(terms.slice(0, 2), null, 2));
-          console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));
-          this.terms = terms;
+          // console.log(now() + " refreshData - terms: " + JSON.stringify(terms, null, 2));
 
           const rawNames = await this.db.names.toArray();
           const names = [];
@@ -913,6 +915,7 @@
             }
             names.push({ ...name, expiryTermIndex, graceEndsAtTermIndex });
           }
+          this.terms = terms;
           this.names = names;
           // console.log(now() + " refreshData - this.names: " + JSON.stringify(this.names, null, 2));
 
@@ -928,7 +931,7 @@
           this.sync.total = null;
           this.sync.completed = 0;
           for (const [accountString, accountData] of Object.entries(this.settings.accounts.data)) {
-            if (accountData.enabled) {
+            if (accountData.sync) {
               const account = ethers.utils.getAddress(accountString);
               console.log(now() + " syncIt - processing: " + account + " " + accountData.name);
               this.sync.info = "Syncing " + account + " " + accountData.name;

@@ -620,39 +620,51 @@
       },
       computed: {
 
-        allAccounts() {
+        sortedFilteredViewAccounts() {
+          return this.sortedFilteredAccounts.filter(e => e.view);
+        },
+        sortedFilteredViewAccountsIndex() {
           const results = {};
-          for (const item of this.names) {
-            results[item.account] = (results[item.account] || 0) + 1;
+          let index = 0;
+          for (const account of this.sortedFilteredViewAccounts) {
+            results[account.account] = index++;
           }
           return results;
         },
+
         summaryHeaders() {
           const results = [];
           results.push({ title: "Term", key: "term", sortable: false });
-          for (const [account, count] of Object.entries(this.allAccounts)) {
-            results.push({ title: account, key: account, sortable: false });
+          for (const account of this.sortedFilteredViewAccounts) {
+            results.push({ title: account.name + " " + account.account.slice(0, 10), key: account.account, sortable: false });
           }
           return results;
         },
 
         filteredSortedSummary() {
+          console.log(now() + " filteredSortedSummary - sortedFilteredViewAccounts: " + JSON.stringify(this.sortedFilteredViewAccounts, null, 2));
+          console.log(now() + " filteredSortedSummary - sortedFilteredViewAccountsIndex: " + JSON.stringify(this.sortedFilteredViewAccountsIndex, null, 2));
+
           const collator = {};
-          for (const name of this.names.slice(0, 10)) {
+          for (const name of this.names) {
             const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
-            if (!(termIndex in collator)) {
-              collator[termIndex] = {};
+            const accountIndex = this.sortedFilteredViewAccountsIndex[name.account];
+            if (accountIndex != null) {
+              if (!(termIndex in collator)) {
+                collator[termIndex] = {};
+              }
+              if (!(accountIndex in collator[termIndex])) {
+                collator[termIndex][accountIndex] = [];
+              }
+              collator[termIndex][accountIndex].push(name);
             }
-            if (!(name.account in collator[termIndex])) {
-              collator[termIndex][name.account] = [];
-            }
-            collator[termIndex][name.account].push(name);
           }
           console.log(now() + " filteredSortedSummary - collator: " + JSON.stringify(collator, null, 2));
 
           const results = [];
           for (const term of this.terms) {
-            results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
+            // results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
+            results.push({ term: term.term });
           }
 
           // // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));

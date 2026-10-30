@@ -195,8 +195,11 @@
                   <tr>
                     <td>{{ item.term }}</td>
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
-                      <!-- {{ item.term + " " + account.name + " " + index + " " + JSON.stringify(item["key" + index].length) }} -->
-                      {{ item["key" + index].length }}: {{ item["key" + index].map(e => e.name).join(", ") }}
+                      <!-- {{ item["key" + index].length }}: {{ item["key" + index].map(e => e.name).join(", ") }} -->
+                      <!-- <v-chip color="primary" variant="flat">Primary flat</v-chip> -->
+                      <v-chip v-for="(name, nameIndex) of item['key' + index]" color="primary" variant="text" class="ma-0 mr-1 pa-0">
+                        {{ name.name }}
+                      </v-chip>
                     </td>
                   </tr>
                   <!-- {{ item }} -->
@@ -647,7 +650,7 @@
           results.push({ title: "Term", key: "term", sortable: false });
           let index = 0;
           for (const account of this.sortedFilteredViewAccounts) {
-            results.push({ title: index + " " + account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false });
+            results.push({ title: account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false });
           }
           return results;
         },

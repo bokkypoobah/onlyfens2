@@ -387,12 +387,13 @@
               <v-icon color="primary">mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
-          <!-- <v-card-text>
-            <v-text-field :disabled="!accountDialog.new" v-model="accountDialog.account" density="compact" label="account" placeholder="0x1234abcd..." clearable></v-text-field>
-            <v-text-field v-model="accountDialog.name" density="compact" label="name" placeholder="account 01" clearable></v-text-field>
-            <v-checkbox-btn v-model="accountDialog.sync" label="Synchronise data" hide-details v-tooltip="'Retrieve data from grails.app API'"></v-checkbox-btn>
-            <v-checkbox-btn v-model="accountDialog.view" label="View names" hide-details v-tooltip="'Include account in views'"></v-checkbox-btn>
-          </v-card-text> -->
+          <v-card-text>
+            <v-text-field readonly :model-value="nameDialog.item.tokenId" density="compact" label="Token Id"></v-text-field>
+            <v-text-field readonly :model-value="nameDialog.item.owner" density="compact" label="Owner"></v-text-field>
+            <v-text-field readonly :model-value="formatTimestamp(nameDialog.item.expiryDate)" density="compact" label="Expiry"></v-text-field>
+            <v-text-field readonly :model-value="formatTimestamp(nameDialog.item.graceEndsAt)" density="compact" label="Grace Ends At"></v-text-field>
+            <v-text-field readonly :model-value="formatTimestamp(nameDialog.item.premiumEndsAt)" density="compact" label="Premium Ends At"></v-text-field>
+          </v-card-text>
           <!-- <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn v-if="accountDialog.new" color="primary" :disabled="!accountDialog.account || !accountDialog.name" @click="addOrUpdateAccount">Add</v-btn>

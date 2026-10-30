@@ -742,7 +742,6 @@
             let include = true;
             if (include && regex) {
               let label = item.name.replace(/\.eth$/, '');
-              // console.log(now() + " sortedFilteredPagedNames - item.name: " + item.name + ", label: " + label);
               if (!(regex.test(label))) {
                 include = false;
               }
@@ -756,7 +755,6 @@
         sortedFilteredPagedNames() {
           const start = (this.namesCurrentPage - 1) * this.settings.names.pageSize;
           const results = this.sortedFilteredNames.slice(start, start + this.settings.names.pageSize);
-          // console.log(now() + " sortedFilteredPagedNames - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
 

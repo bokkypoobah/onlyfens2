@@ -114,7 +114,7 @@
             </v-btn>
             <v-spacer></v-spacer>
             <v-chip v-if="settings.tab == 'names'" color="primary" variant="text" v-tooltip="'#search/#total names'">
-              {{ filteredSortedNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
+              {{ sortedFilteredNames.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ names.length }}</span>
             </v-chip>
             <v-chip v-if="settings.tab == 'accounts'" color="primary" variant="text" v-tooltip="'#search/#total accounts'">
               {{ sortedFilteredAccounts.length }} <span v-if="$vuetify.display.mdAndUp">/ {{ Object.keys(settings.accounts.data).length }}</span>
@@ -150,7 +150,7 @@
               v-if="settings.tab == 'names'"
               v-model="namesCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedNames.length / settings.names.pageSize)"
+              :length="Math.ceil(sortedFilteredNames.length / settings.names.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               :show-first-last-page="$vuetify.display.mdAndUp"
@@ -201,7 +201,7 @@
             <!-- NAMES TAB -->
             <v-tabs-window-item value="names" class="ma-1 pa-0">
               <v-data-table
-                :items="filteredSortedPagedNames"
+                :items="sortedFilteredPagedNames"
                 :headers="nameHeaders"
                 :items-per-page="-1"
                 hide-default-footer
@@ -284,7 +284,7 @@
               v-if="settings.tab == 'names'"
               v-model="namesCurrentPage"
               @update:model-value="saveSettings();"
-              :length="Math.ceil(filteredSortedNames.length / settings.names.pageSize)"
+              :length="Math.ceil(sortedFilteredNames.length / settings.names.pageSize)"
               :total-visible="$vuetify.display.mdAndUp ? 4 : 1"
               density="comfortable"
               show-first-last-page
@@ -671,29 +671,10 @@
           return results;
         },
 
-        filteredSortedNames() {
-          let regex = null;
-          if (this.settings.nameFilter != null && this.settings.nameFilter.length > 0) {
-            try {
-              regex = new RegExp(this.settings.nameFilter, 'i');
-            } catch (e) {
-              console.log("filteredSortedNames - regex error: " + e.message);
-              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
-            }
-          }
+        sortedNames() {
           const results = [];
           for (const item of this.names) {
-            let include = true;
-            if (include && regex) {
-              let label = item.name.replace(/\.eth$/, '');
-              // console.log(now() + " filteredSortedPagedNames - item.name: " + item.name + ", label: " + label);
-              if (!(regex.test(label))) {
-                include = false;
-              }
-            }
-            if (include) {
               results.push(item);
-            }
           }
           if (this.settings.names.sortOption == "nameasc") {
             results.sort((a, b) => {
@@ -746,10 +727,36 @@
           }
           return results;
         },
-        filteredSortedPagedNames() {
+        sortedFilteredNames() {
+          let regex = null;
+          if (this.settings.nameFilter != null && this.settings.nameFilter.length > 0) {
+            try {
+              regex = new RegExp(this.settings.nameFilter, 'i');
+            } catch (e) {
+              console.log("sortedFilteredNames - regex error: " + e.message);
+              regex = new RegExp(/thequickbrowndogjumpsoverthelazyfox/, 'i');
+            }
+          }
+          const results = [];
+          for (const item of this.sortedNames) {
+            let include = true;
+            if (include && regex) {
+              let label = item.name.replace(/\.eth$/, '');
+              // console.log(now() + " sortedFilteredPagedNames - item.name: " + item.name + ", label: " + label);
+              if (!(regex.test(label))) {
+                include = false;
+              }
+            }
+            if (include) {
+              results.push(item);
+            }
+          }
+          return results;
+        },
+        sortedFilteredPagedNames() {
           const start = (this.namesCurrentPage - 1) * this.settings.names.pageSize;
-          const results = this.filteredSortedNames.slice(start, start + this.settings.names.pageSize);
-          // console.log(now() + " filteredSortedPagedNames - results: " + JSON.stringify(results.slice(0, 2), null, 2));
+          const results = this.sortedFilteredNames.slice(start, start + this.settings.names.pageSize);
+          // console.log(now() + " sortedFilteredPagedNames - results: " + JSON.stringify(results.slice(0, 2), null, 2));
           return results;
         },
 
@@ -811,9 +818,7 @@
         },
         sortedFilteredPagedAccounts() {
           const start = (this.accountsCurrentPage - 1) * this.settings.accounts.pageSize;
-          const results = this.sortedFilteredAccounts.slice(start, start + this.settings.accounts.pageSize);
-          // console.log(now() + " filteredSortedPagedDocuments - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          return results;
+          return this.sortedFilteredAccounts.slice(start, start + this.settings.accounts.pageSize);
         },
 
       },

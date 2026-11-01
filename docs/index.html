@@ -206,7 +206,7 @@
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
                       <!-- {{ item["key" + index].length }}: {{ item["key" + index].map(e => e.name).join(", ") }} -->
                       <!-- <v-chip color="primary" variant="flat">Primary flat</v-chip> -->
-                      <v-chip v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" color="primary" variant="text" class="ma-0 mr-1 pa-0">
+                      <v-chip v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : 'red') " variant="text" class="ma-0 mr-1 pa-0">
                         {{ name.name }}
                       </v-chip>
                     </td>
@@ -688,9 +688,8 @@
         },
 
         filteredSortedSummary() {
-          console.log(now() + " filteredSortedSummary - sortedFilteredViewAccounts: " + JSON.stringify(this.sortedFilteredViewAccounts, null, 2));
-          console.log(now() + " filteredSortedSummary - sortedFilteredViewAccountsIndex: " + JSON.stringify(this.sortedFilteredViewAccountsIndex, null, 2));
-
+          // console.log(now() + " filteredSortedSummary - sortedFilteredViewAccounts: " + JSON.stringify(this.sortedFilteredViewAccounts, null, 2));
+          // console.log(now() + " filteredSortedSummary - sortedFilteredViewAccountsIndex: " + JSON.stringify(this.sortedFilteredViewAccountsIndex, null, 2));
           const collator = {};
           for (const name of this.sortedFilteredNames) {
             const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
@@ -968,7 +967,26 @@
         },
 
         async refreshData() {
-          const termsInfo = [[1, "d", "1d"], [2, "d", "2d"], [3, "d", "3d"], [1, "w", "1w"], [2, "w", "2w"], [1, "M", "1m"], [2, "M", "2m"], [3, "M", "3m"], [6, "M", "6m"], [1, "y", "1y"], [2, "y", "2y"], [3, "y", "3y"], [5, "y", "5y"], [10, "y", "10y"], [1000000, "y", ">10y"]];
+          const termsInfo = [
+            [0, "d", "expired"],
+            [0, "d", "premium"],
+            [0, "d", "grace"],
+            [1, "d", "1d"],
+            [2, "d", "2d"],
+            [3, "d", "3d"],
+            [1, "w", "1w"],
+            [2, "w", "2w"],
+            [1, "M", "1m"],
+            [2, "M", "2m"],
+            [3, "M", "3m"],
+            [6, "M", "6m"],
+            [1, "y", "1y"],
+            [2, "y", "2y"],
+            [3, "y", "3y"],
+            [5, "y", "5y"],
+            [10, "y", "10y"],
+            [1000000, "y", ">10y"]
+          ];
           const currentTime = moment();
           const terms = [];
           for (const termInfo of termsInfo) {
@@ -980,6 +998,27 @@
           for (const name of rawNames) {
             let expiryTermIndex = null;
             let graceEndsAtTermIndex = null;
+            let status = null;
+
+            // Available
+            if (name.premiumEndsAt < currentTime.unix()) {
+              status = "available";
+            } else if (name.graceEndsAt < currentTime.unix()) {
+              status = "premium";
+            } else if (name.expiryDate < currentTime.unix()) {
+              status = "grace";
+            } else {
+              status = "registered";
+            }
+            // if (name.registrationStatus != status) {
+            //   console.error(now() + " refreshData - name: " + name.name + ", expiry: " + formatLocalTime(name.expiryDate) + ", graceEndsAt: " + formatLocalTime(name.graceEndsAt) + ", premiumEndsAt: " + formatLocalTime(name.premiumEndsAt) + ", registrationStatus: " + name.registrationStatus + ", status: " + status);
+            //   // console.error(now() + " refreshData - name.registrationStatus != status: " + JSON.stringify({ ...name, status }));
+            // }
+            if (name.expiryDate == name.graceEndsAt) {
+              console.error(now() + " refreshData - name: " + name.name + ", expiry: " + formatLocalTime(name.expiryDate) + ", graceEndsAt: " + formatLocalTime(name.graceEndsAt) + ", premiumEndsAt: " + formatLocalTime(name.premiumEndsAt) + ", registrationStatus: " + name.registrationStatus + ", status: " + status);
+              // console.error(now() + " refreshData - name.registrationStatus != status: " + JSON.stringify({ ...name, status }));
+            }
+
             for (let i = 0; i < terms.length; i++) {
               if (terms[i].endDate > name.expiryDate) {
                 expiryTermIndex = i;
@@ -992,7 +1031,7 @@
                 break;
               }
             }
-            names.push({ ...name, expiryTermIndex, graceEndsAtTermIndex });
+            names.push({ ...name, expiryTermIndex, graceEndsAtTermIndex, status });
           }
           this.terms = terms;
           this.names = names;
@@ -1012,42 +1051,48 @@
             console.log(now() + " syncIt - processing: " + account.account + " " + account.name);
             this.sync.info = "Syncing " + account.account + " " + account.name;
             let names = [];
-            let done = false;
-            let page = 1;
-            do {
-              const url = "https://api.grails.app/api/v1/search?limit=" + PAGESIZE + "&page=" + page + "&filters[owner]=" + address + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&sortBy=expiry_date&sortOrder=asc";
-              console.log(now() + " syncIt - processing - url: " + url);
-              const response = await fetch(url).then(response => response.json());
-              if (response.success) {
-                for (const result of response.data.results) {
-                  console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
-                  const name = {
-                    account: address,
-                    tokenId: result.token_id,
-                    externalId: result.id,
-                    name: result.name,
-                    owner: ethers.utils.getAddress(result.owner),
-                    expiryDate: moment(result.expiry_date).unix(),
-                    registrationStatus: result.registration_status,
-                    graceEndsAt: moment(result.grace_ends_at).unix(),
-                    premiumEndsAt: moment(result.premium_ends_at).unix(),
-                    registrationDate: moment(result.registration_date).unix(),
-                    creationDate: moment(result.creation_date).unix(),
-                    retrievedAt,
-                  };
-                  console.log(now() + " syncIt - processing - name: " + JSON.stringify(name, null, 2));
-                  names.push(name);
+
+            for (const status of ["", "&filters[status]=premium", "&filters[status]=available"]) {
+              console.log(now() + " syncIt - status: " + status);
+              let done = false;
+              let page = 1;
+              do {
+                // https://api.grails.app/api/v1/search?limit=50&page=1&filters[owner]=0x287f9b46dcea520d829c874b0af01f4fbfef9243&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&filters[status]=premium&sortBy=expiry_date&sortOrder=desc
+                // https://api.grails.app/api/v1/search?limit=50&page=1&filters[owner]=0x287f9b46dcea520d829c874b0af01f4fbfef9243&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include&filters[status]=available&sortBy=expiry_date&sortOrder=desc
+                const url = "https://api.grails.app/api/v1/search?limit=" + PAGESIZE + "&page=" + page + "&filters[owner]=" + address + "&filters[letters]=include&filters[digits]=include&filters[emoji]=include&filters[repeatingChars]=include" + status + "&sortBy=expiry_date&sortOrder=asc";
+                console.log(now() + " syncIt - processing - url: " + url);
+                const response = await fetch(url).then(response => response.json());
+                if (response.success) {
+                  for (const result of response.data.results) {
+                    console.log(now() + " syncIt - processing - result: " + JSON.stringify(result, null, 2));
+                    const name = {
+                      account: address,
+                      tokenId: result.token_id,
+                      externalId: result.id,
+                      name: result.name,
+                      owner: ethers.utils.getAddress(result.owner),
+                      expiryDate: moment(result.expiry_date).unix(),
+                      registrationStatus: result.registration_status,
+                      graceEndsAt: moment(result.grace_ends_at).unix(),
+                      premiumEndsAt: moment(result.premium_ends_at).unix(),
+                      registrationDate: moment(result.registration_date).unix(),
+                      creationDate: moment(result.creation_date).unix(),
+                      retrievedAt,
+                    };
+                    console.log(now() + " syncIt - processing - name: " + JSON.stringify(name, null, 2));
+                    names.push(name);
+                  }
+                  console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
+                  this.sync.completed += response.data.results.length;
                 }
-                console.log(now() + " syncIt - processing - response.data.pagination: " + JSON.stringify(response.data.pagination, null, 2));
-                this.sync.completed += response.data.results.length;
-              }
-              done = !response || !response.success || !response.data.pagination.hasNext;
-              // done = true; // TODO: Testing
-              if (!done) {
-                page++;
-                await delay(2000);
-              }
-            } while (!done);
+                done = !response || !response.success || !response.data.pagination.hasNext;
+                // done = true; // TODO: Testing
+                if (!done) {
+                  page++;
+                  await delay(2000);
+                }
+              } while (!done);
+            }
             console.log(now() + " syncIt - processing - names: " + JSON.stringify(names, null, 2));
             const deleteCall = await this.db.names.where("[account+tokenId]").between([account.account, Dexie.minKey], [account.account, Dexie.maxKey]).delete();
             console.log(now() + " syncIt - processing - deleteCall: " + JSON.stringify(deleteCall, null, 2));

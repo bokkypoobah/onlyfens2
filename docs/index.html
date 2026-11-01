@@ -206,7 +206,7 @@
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
                       <!-- {{ item["key" + index].length }}: {{ item["key" + index].map(e => e.name).join(", ") }} -->
                       <!-- <v-chip color="primary" variant="flat">Primary flat</v-chip> -->
-                      <v-chip v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : 'red') " variant="text" class="ma-0 mr-1 pa-0">
+                      <v-chip v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green')) " variant="text" class="ma-0 mr-1 pa-0">
                         {{ name.name }}
                       </v-chip>
                     </td>

@@ -270,20 +270,17 @@
                   <td class="text-center">{{ (accountsCurrentPage - 1) * settings.accounts.pageSize + index + 1 }}</td>
                 </template>
                 <template #item.account="{ item }">
-                  {{ item.account }}
-
                   <v-btn text size="small" color="primary" variant="text" class="text-none">
-                    <v-icon>mdi-dots-vertical</v-icon>
-                  <!-- <v-btn color="primary"> -->
+                    {{ item.account }}
                     <v-menu activator="parent">
                       <v-list>
                         <v-list-subheader>{{ item.account }} {{ item.name }}</v-list-subheader>
+                        <v-divider></v-divider>
                         <v-list-item title="Copy account to clipboard" @click="copyToClipboard(item.account);">
                           <template v-slot:prepend>
                             <v-icon icon="mdi-clipboard-outline"></v-icon>
                           </template>
                         </v-list-item>
-                        <v-divider></v-divider>
                         <v-list-item title="View account in etherscan.io" :href="'https://etherscan.io/address/' + item.account" target="_blank" link>
                           <template v-slot:prepend>
                             <v-icon icon="mdi-link-variant"></v-icon>

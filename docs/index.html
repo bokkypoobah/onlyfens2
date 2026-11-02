@@ -190,9 +190,9 @@
           <v-tabs-window v-if="Object.keys(settings.accounts.data).length > 0" v-model="settings.tab" class="ma-1 mt-3 pa-0">
             <!-- SUMMARY TAB -->
             <v-tabs-window-item value="summary" class="ma-1 pa-0">
-
-              <!-- termsNew: {{ termsNew }} -->
-
+              <!-- <pre>
+namesWithTermIndex: {{ JSON.stringify(namesWithTermIndex, null, 2) }}
+              </pre> -->
               <v-data-table
                 :items="filteredSortedSummary"
                 :headers="summaryHeaders"
@@ -210,7 +210,7 @@
                       <span v-else>
                         <v-btn text color="primary" variant="text" class="text-none link-btn" v-tooltip="column.account">
                           {{ column.title }}
-                          <v-menu activator="parent">
+                          <v-menu activator="parent" location="end">
                             <v-list>
                               <v-list-subheader>{{ column.account }} {{ column.title }}</v-list-subheader>
                               <v-divider></v-divider>
@@ -252,7 +252,7 @@
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
                       <v-btn text v-for="(name, nameIndex) of item['key' + index]" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(name.expiryDate) + ' Grace ends ' + formatTimestamp(name.graceEndsAt) + ' Premium ends ' + formatTimestamp(name.premiumEndsAt)">
                         {{ name.name }}
-                        <v-menu activator="parent">
+                        <v-menu activator="parent" location="end">
                           <v-list>
                             <v-list-subheader>{{ name.name }}</v-list-subheader>
                             <v-divider></v-divider>
@@ -310,7 +310,7 @@
                 <template #item.name="{ item }">
                   <v-btn text :color="item.status == 'registered' ? 'primary' : (item.status == 'grace' ? 'orange' : (item.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(item.expiryDate) + ' Grace ends ' + formatTimestamp(item.graceEndsAt) + ' Premium ends ' + formatTimestamp(item.premiumEndsAt)">
                     {{ item.name }}
-                    <v-menu activator="parent">
+                    <v-menu activator="parent" location="end">
                       <v-list>
                         <v-list-subheader>{{ item.name }}</v-list-subheader>
                         <v-divider></v-divider>
@@ -388,7 +388,7 @@
                 <template #item.account="{ item }">
                   <v-btn text color="primary" variant="text" class="text-none link-btn">
                     {{ item.account }}
-                    <v-menu activator="parent">
+                    <v-menu activator="parent" location="end">
                       <v-list>
                         <v-list-subheader>{{ item.account }} {{ item.name }}</v-list-subheader>
                         <v-divider></v-divider>
@@ -832,17 +832,17 @@
             [0, "d", "premium"],
             [0, "d", "grace"],
             [1, "d", "1d"],
-            [2, "d", "2d"],
-            [3, "d", "3d"],
+            // [2, "d", "2d"],
+            // [3, "d", "3d"],
             [1, "w", "1w"],
-            [2, "w", "2w"],
+            // [2, "w", "2w"],
             [1, "M", "1m"],
-            [2, "M", "2m"],
+            // [2, "M", "2m"],
             [3, "M", "3m"],
             [6, "M", "6m"],
             [1, "y", "1y"],
-            [2, "y", "2y"],
-            [3, "y", "3y"],
+            // [2, "y", "2y"],
+            // [3, "y", "3y"],
             [5, "y", "5y"],
             [10, "y", "10y"],
             [1000, "y", ">10y"]
@@ -858,6 +858,39 @@
           } else {
             return terms.filter(e => e.term != "grace");
           }
+        },
+
+        namesWithTermIndex() {
+          const useGrace = this.settings.summary.expiryOrGrace != "expiry";
+          console.log(now() + " namesWithTermIndex - useGrace: " + useGrace);
+          const results = [];
+          const currentTime = moment();
+          for (const name of this.names) {
+            let termIndex = null;
+            let status = null;
+            // Available
+            if (name.premiumEndsAt < currentTime.unix()) {
+              status = "available";
+              termIndex = 0;
+            } else if (name.graceEndsAt < currentTime.unix()) {
+              status = "premium";
+              termIndex = 1;
+            } else {
+              if (name.expiryDate < currentTime.unix()) {
+                status = "grace";
+              } else {
+                status = "registered";
+              }
+              for (let i = 2; i < this.termsNew.length; i++) {
+                if (this.termsNew[i].endDate > name.expiryDate) {
+                  termIndex = i;
+                  break;
+                }
+              }
+            }
+            results.push({ ...name, status, termIndex });
+          }
+          return results;
         },
 
         sortedFilteredViewAccounts() {
@@ -883,26 +916,22 @@
         },
 
         filteredSortedSummary() {
-          // console.log(now() + " filteredSortedSummary - sortedFilteredViewAccounts: " + JSON.stringify(this.sortedFilteredViewAccounts, null, 2));
-          // console.log(now() + " filteredSortedSummary - sortedFilteredViewAccountsIndex: " + JSON.stringify(this.sortedFilteredViewAccountsIndex, null, 2));
           const collator = {};
           for (const name of this.sortedFilteredNames) {
-            const termIndex = this.settings.summary.expiryOrGrace == "expiry" ? name.expiryTermIndex : name.graceEndsAtTermIndex;
             const accountIndex = this.sortedFilteredViewAccountsIndex[name.account];
             if (accountIndex != null) {
-              if (!(termIndex in collator)) {
-                collator[termIndex] = {};
+              if (!(name.termIndex in collator)) {
+                collator[name.termIndex] = {};
               }
-              if (!(accountIndex in collator[termIndex])) {
-                collator[termIndex][accountIndex] = [];
+              if (!(accountIndex in collator[name.termIndex])) {
+                collator[name.termIndex][accountIndex] = [];
               }
-              collator[termIndex][accountIndex].push(name);
+              collator[name.termIndex][accountIndex].push(name);
             }
           }
-          console.log(now() + " filteredSortedSummary - collator: " + JSON.stringify(collator, null, 2));
 
           const results = [];
-          for (const [termIndex, term] of this.terms.entries()) {
+          for (const [termIndex, term] of this.termsNew.entries()) {
             // results.push({ term: term.term, endDate: term.endDate, endDateString: formatLocalTime(term.endDate), names: {} });
             const record = { term: term.term };
             for (let accountIndex = 0; accountIndex < this.sortedFilteredViewAccounts.length; accountIndex++) {
@@ -912,28 +941,13 @@
             // results.push({ term: term.term, "key0": "0" });
           }
 
-          // // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results.slice(0, 2), null, 2));
-          for (const name of this.names) {
-          //   // console.log(now() + " filteredSortedSummary - name: " + JSON.stringify(name, null, 2));
-          //   for (let i = 0; i < results.length; i++) {
-          //     // console.log(now() + " filteredSortedSummary - results[" + i + "]: " + JSON.stringify(results[i], null, 2));
-          //     if (results[i].endDate > name.expiryDate) {
-          //       if (!(name.account in results[i].names)) {
-          //         results[i].names[name.account] = [];
-          //       }
-          //       // results[i].names[name.account].push(name);
-          //       results[i].names[name.account].push({ name: name.name, expiryDate: name.expiryDate });
-          //       break;
-          //     }
-          //   }
-          }
           // console.log(now() + " filteredSortedSummary - results: " + JSON.stringify(results, null, 2));
           return results;
         },
 
         sortedNames() {
           const results = [];
-          for (const item of this.names) {
+          for (const item of this.namesWithTermIndex) {
               results.push(item);
           }
           if (this.settings.names.sortOption == "nameasc") {
@@ -1158,74 +1172,7 @@
         },
 
         async refreshData() {
-          const termsInfo = [
-            [0, "d", "available"],
-            [0, "d", "premium"],
-            [0, "d", "grace"],
-            [1, "d", "1d"],
-            [2, "d", "2d"],
-            [3, "d", "3d"],
-            [1, "w", "1w"],
-            [2, "w", "2w"],
-            [1, "M", "1m"],
-            [2, "M", "2m"],
-            [3, "M", "3m"],
-            [6, "M", "6m"],
-            [1, "y", "1y"],
-            [2, "y", "2y"],
-            [3, "y", "3y"],
-            [5, "y", "5y"],
-            [10, "y", "10y"],
-            [1000, "y", ">10y"]
-          ];
-          const currentTime = moment();
-          const terms = [];
-          for (const termInfo of termsInfo) {
-            const endDate = currentTime.clone().add(termInfo[0], termInfo[1]);
-            terms.push({ term: termInfo[2], endDate: endDate.unix(), endDateString: formatLocalTime(endDate.unix()) });
-          }
-          const rawNames = await this.db.names.toArray();
-          const names = [];
-          for (const name of rawNames) {
-            let expiryTermIndex = null;
-            let graceEndsAtTermIndex = null;
-            let status = null;
-
-            // Available
-            if (name.premiumEndsAt < currentTime.unix()) {
-              status = "available";
-            } else if (name.graceEndsAt < currentTime.unix()) {
-              status = "premium";
-            } else if (name.expiryDate < currentTime.unix()) {
-              status = "grace";
-            } else {
-              status = "registered";
-            }
-            // if (name.registrationStatus != status) {
-            //   console.error(now() + " refreshData - name: " + name.name + ", expiry: " + formatLocalTime(name.expiryDate) + ", graceEndsAt: " + formatLocalTime(name.graceEndsAt) + ", premiumEndsAt: " + formatLocalTime(name.premiumEndsAt) + ", registrationStatus: " + name.registrationStatus + ", status: " + status);
-            //   // console.error(now() + " refreshData - name.registrationStatus != status: " + JSON.stringify({ ...name, status }));
-            // }
-            if (name.expiryDate == name.graceEndsAt) {
-              console.error(now() + " refreshData - name: " + name.name + ", expiry: " + formatLocalTime(name.expiryDate) + ", graceEndsAt: " + formatLocalTime(name.graceEndsAt) + ", premiumEndsAt: " + formatLocalTime(name.premiumEndsAt) + ", registrationStatus: " + name.registrationStatus + ", status: " + status);
-              // console.error(now() + " refreshData - name.registrationStatus != status: " + JSON.stringify({ ...name, status }));
-            }
-
-            for (let i = 0; i < terms.length; i++) {
-              if (terms[i].endDate > name.expiryDate) {
-                expiryTermIndex = i;
-                break;
-              }
-            }
-            for (let i = 0; i < terms.length; i++) {
-              if (terms[i].endDate > name.graceEndsAt) {
-                graceEndsAtTermIndex = i;
-                break;
-              }
-            }
-            names.push({ ...name, expiryTermIndex, graceEndsAtTermIndex, status });
-          }
-          this.terms = terms;
-          this.names = names;
+          this.names = await this.db.names.toArray();
           // await this.applyFilter();
         },
 

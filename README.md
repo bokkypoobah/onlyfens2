@@ -26,9 +26,6 @@ Click Sync and view your names in the ENS Names tab
 
 <kbd><img src="images/SampleImage0003.png" /></kbd>
 
-and
-
-<kbd><img src="images/SampleImage0004.png" /></kbd>
 
 View your names by expiry sorted into a term bucket.
 

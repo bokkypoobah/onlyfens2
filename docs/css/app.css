@@ -17,6 +17,10 @@
   background: white;
 }
 
+.v-data-table td {
+  vertical-align: top;
+}
+
 .link-btn {
   min-width: 0;
   padding-inline: 0;

@@ -250,8 +250,44 @@
                   <tr>
                     <td>{{ item.term }}</td>
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
-                      <v-btn text v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(name.expiryDate) + ' Grace ends ' + formatTimestamp(name.graceEndsAt) + ' Premium ends ' + formatTimestamp(name.premiumEndsAt)">
+                      <v-btn text v-for="(name, nameIndex) of item['key' + index]" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(name.expiryDate) + ' Grace ends ' + formatTimestamp(name.graceEndsAt) + ' Premium ends ' + formatTimestamp(name.premiumEndsAt)">
                         {{ name.name }}
+                        <v-menu activator="parent">
+                          <v-list>
+                            <v-list-subheader>{{ name.name }}</v-list-subheader>
+                            <v-divider></v-divider>
+                            <v-list-item title="View name" @click="viewName(name);">
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-text-box-outline"></v-icon>
+                              </template>
+                            </v-list-item>
+                            <v-list-item title="Copy name to clipboard" @click="copyToClipboard(name.name);">
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-clipboard-outline"></v-icon>
+                              </template>
+                            </v-list-item>
+                            <v-list-item title="Copy token id to clipboard" @click="copyToClipboard(name.tokenId);">
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-clipboard-outline"></v-icon>
+                              </template>
+                            </v-list-item>
+                            <v-list-item title="View name in etherscan.io" :href="'https://etherscan.io/name-lookup-search?id=' + name.name" target="_blank" link>
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-link-variant"></v-icon>
+                              </template>
+                            </v-list-item>
+                            <v-list-item title="View name in app.ens.domains" :href="'https://app.ens.domains/' + name.name" target="_blank" link>
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-link-variant"></v-icon>
+                              </template>
+                            </v-list-item>
+                            <v-list-item title="View name in grails.app" :href="'https://grails.app/' + name.name" target="_blank" link>
+                              <template v-slot:prepend>
+                                <v-icon icon="mdi-link-variant"></v-icon>
+                              </template>
+                            </v-list-item>
+                          </v-list>
+                        </v-menu activator="parent">
                       </v-btn>
                     </td>
                   </tr>
@@ -331,7 +367,17 @@
                             <v-icon icon="mdi-link-variant"></v-icon>
                           </template>
                         </v-list-item>
+                        <v-list-item title="View account in grails.app" :href="'https://grails.app/profile/' + item.account" target="_blank" link>
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-link-variant"></v-icon>
+                          </template>
+                        </v-list-item>
                         <v-list-item title="View name in app.ens.domains" :href="'https://app.ens.domains/' + item.name" target="_blank" link>
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-link-variant"></v-icon>
+                          </template>
+                        </v-list-item>
+                        <v-list-item title="View name in grails.app" :href="'https://grails.app/' + item.name" target="_blank" link>
                           <template v-slot:prepend>
                             <v-icon icon="mdi-link-variant"></v-icon>
                           </template>
@@ -1063,14 +1109,6 @@
           this.accountDialog.show = false;
           this.saveSettings();
         },
-
-        // 09:41:56 viewName - item: {"account":"0x287F9b46dceA520D829c874b0AF01f4fbfeF9243",
-        // "tokenId":"11379483953724174083850103403105106547965386366430273260229688498310297980064",
-        // "externalId":2861816,"name":"bigtobaccoceo.eth",
-        // "owner":"0x287F9b46dceA520D829c874b0AF01f4fbfeF9243","expiryDate":1785594731,
-        // "registrationStatus":"grace","graceEndsAt":1793370731,"premiumEndsAt":1795185131,
-        // "registrationDate":1659408827,"creationDate":1659408827,
-        // "retrievedAt":1793337768,"expiryTermIndex":0,"graceEndsAtTermIndex":0}
 
         viewName(item) {
           // console.log(now() + " viewName - item: " + JSON.stringify(item));

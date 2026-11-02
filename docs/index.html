@@ -202,6 +202,51 @@
                 class="elevation-1"
                 @click:row="editAccount"
               >
+                <template v-slot:headers="{ columns, isSorted, getSortIcon, toggleSort }">
+                  <tr>
+                    <th v-for="column in columns" :key="column.key">
+                      <span v-if="!column.account">
+                        {{ column.title }}
+                      </span>
+                      <span v-else>
+                        <v-btn text color="primary" variant="text" class="text-none">
+                          {{ column.title }}
+                          <v-menu activator="parent">
+                            <v-list>
+                              <v-list-subheader>{{ column.account }} {{ column.title }}</v-list-subheader>
+                              <v-divider></v-divider>
+                              <v-list-item title="Copy account to clipboard" @click="copyToClipboard(column.account);">
+                                <template v-slot:prepend>
+                                  <v-icon icon="mdi-clipboard-outline"></v-icon>
+                                </template>
+                              </v-list-item>
+                              <v-list-item title="View account in etherscan.io" :href="'https://etherscan.io/address/' + column.account" target="_blank" link>
+                                <template v-slot:prepend>
+                                  <v-icon icon="mdi-link-variant"></v-icon>
+                                </template>
+                              </v-list-item>
+                              <v-list-item title="View account in app.ens.domains" :href="'https://app.ens.domains/' + column.account" target="_blank" link>
+                                <template v-slot:prepend>
+                                  <v-icon icon="mdi-link-variant"></v-icon>
+                                </template>
+                              </v-list-item>
+                              <v-list-item title="View name in app.ens.domains" :href="'https://app.ens.domains/' + column.title" target="_blank" link>
+                                <template v-slot:prepend>
+                                  <v-icon icon="mdi-link-variant"></v-icon>
+                                </template>
+                              </v-list-item>
+                              <v-list-item title="View account in opensea.io" :href="'https://opensea.io/' + column.account" target="_blank" link>
+                                <template v-slot:prepend>
+                                  <v-icon icon="mdi-link-variant"></v-icon>
+                                </template>
+                              </v-list-item>
+                            </v-list>
+                          </v-menu>
+                        </v-btn>
+                      </span>
+                    </th>
+                  </tr>
+                </template>
                 <template v-slot:item="{ item }">
                   <!-- <tr class="text-no-wrap"> -->
                   <tr>
@@ -304,7 +349,6 @@
                       </v-list>
                     </v-menu>
                   </v-btn>
-
                 </template>
                 <template #item.sync="{ item }">
                   <v-checkbox-btn :model-value="item.sync" @update:model-value="toggleAccountSync(item);" @click.stop hide-details></v-checkbox-btn>
@@ -752,7 +796,7 @@
           results.push({ title: "Term", key: "term", sortable: false, width: "5%" });
           let index = 0;
           for (const account of this.sortedFilteredViewAccounts) {
-            results.push({ title: account.name + " " + account.account.slice(0, 10), key: "key" + index++, sortable: false, width: "50%" });
+            results.push({ title: account.name, key: "key" + index++, account: account.account, sortable: false, width: "50%" });
           }
           return results;
         },

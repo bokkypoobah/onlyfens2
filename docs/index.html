@@ -266,11 +266,11 @@
                                 <v-icon icon="mdi-clipboard-outline"></v-icon>
                               </template>
                             </v-list-item>
-                            <v-list-item title="Copy token id to clipboard" @click="copyToClipboard(name.tokenId);">
+                            <!-- <v-list-item title="Copy token id to clipboard" @click="copyToClipboard(name.tokenId);">
                               <template v-slot:prepend>
                                 <v-icon icon="mdi-clipboard-outline"></v-icon>
                               </template>
-                            </v-list-item>
+                            </v-list-item> -->
                             <v-list-item title="View name in etherscan.io" :href="'https://etherscan.io/name-lookup-search?id=' + name.name" target="_blank" link>
                               <template v-slot:prepend>
                                 <v-icon icon="mdi-link-variant"></v-icon>
@@ -287,7 +287,7 @@
                               </template>
                             </v-list-item>
                           </v-list>
-                        </v-menu activator="parent">
+                        </v-menu>
                       </v-btn>
                     </td>
                   </tr>
@@ -303,10 +303,50 @@
                 :items-per-page="-1"
                 hide-default-footer
                 class="elevation-1"
-                @click:row="editAccount"
               >
                 <template #item.number="{ index }">
                   <td class="text-center">{{ (namesCurrentPage - 1) * settings.names.pageSize + index + 1 }}</td>
+                </template>
+                <template #item.name="{ item }">
+                  <v-btn text :color="item.status == 'registered' ? 'primary' : (item.status == 'grace' ? 'orange' : (item.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(item.expiryDate) + ' Grace ends ' + formatTimestamp(item.graceEndsAt) + ' Premium ends ' + formatTimestamp(item.premiumEndsAt)">
+                    {{ item.name }}
+                    <v-menu activator="parent">
+                      <v-list>
+                        <v-list-subheader>{{ item.name }}</v-list-subheader>
+                        <v-divider></v-divider>
+                        <v-list-item title="View name" @click="viewName(item);">
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-text-box-outline"></v-icon>
+                          </template>
+                        </v-list-item>
+                        <v-list-item title="Copy name to clipboard" @click="copyToClipboard(item.name);">
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-clipboard-outline"></v-icon>
+                          </template>
+                        </v-list-item>
+                        <!-- <v-list-item title="Copy token id to clipboard" @click="copyToClipboard(item.tokenId);">
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-clipboard-outline"></v-icon>
+                          </template>
+                        </v-list-item> -->
+                        <v-list-item title="View name in etherscan.io" :href="'https://etherscan.io/name-lookup-search?id=' + item.name" target="_blank" link>
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-link-variant"></v-icon>
+                          </template>
+                        </v-list-item>
+                        <v-list-item title="View name in app.ens.domains" :href="'https://app.ens.domains/' + item.name" target="_blank" link>
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-link-variant"></v-icon>
+                          </template>
+                        </v-list-item>
+                        <v-list-item title="View name in grails.app" :href="'https://grails.app/' + item.name" target="_blank" link>
+                          <template v-slot:prepend>
+                            <v-icon icon="mdi-link-variant"></v-icon>
+                          </template>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
+                  </v-btn>
                 </template>
                 <template #item.expiry="{ item }">
                   <td class="text-center">{{ formatTimestamp(item.expiryDate) }}</td>

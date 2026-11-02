@@ -247,20 +247,16 @@
                   </tr>
                 </template>
                 <template v-slot:item="{ item }">
-                  <!-- <tr class="text-no-wrap"> -->
                   <tr>
                     <td>{{ item.term }}</td>
                     <td v-for="(account, index) of sortedFilteredViewAccounts">
-                      <v-chip v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green')) " variant="text" class="ma-0 mr-1 pa-0">
+                      <v-btn text v-for="(name, nameIndex) of item['key' + index]" @click="viewName(name);" :color="name.status == 'registered' ? 'primary' : (name.status == 'grace' ? 'orange' : (name.status == 'premium' ? 'red' : 'green'))" variant="text" class="text-none link-btn mr-2" v-tooltip="'Expiry ' + formatTimestamp(name.expiryDate) + ' Grace ends ' + formatTimestamp(name.graceEndsAt) + ' Premium ends ' + formatTimestamp(name.premiumEndsAt)">
                         {{ name.name }}
-                      </v-chip>
+                      </v-btn>
                     </td>
                   </tr>
                 </template>
               </v-data-table>
-              <!-- <pre>
-{{ JSON.stringify(filteredSortedSummary, null, 2) }}
-              </pre> -->
             </v-tabs-window-item>
 
             <!-- NAMES TAB -->

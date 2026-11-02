@@ -16,3 +16,8 @@
   /* background: inherit; */
   background: white;
 }
+
+.link-btn {
+  min-width: 0;
+  padding-inline: 0;
+}

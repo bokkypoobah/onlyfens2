@@ -89,7 +89,6 @@
 
       <v-main>
         <v-container fluid class="ma-0 pa-0">
-
           <v-alert
             v-if="Object.keys(settings.accounts.data).length == 0"
             closable
@@ -209,7 +208,7 @@
                         {{ column.title }}
                       </span>
                       <span v-else>
-                        <v-btn text color="primary" variant="text" class="text-none link-btn">
+                        <v-btn text color="primary" variant="text" class="text-none link-btn" v-tooltip="column.account">
                           {{ column.title }}
                           <v-menu activator="parent">
                             <v-list>
